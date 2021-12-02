@@ -25,9 +25,7 @@ fn count_move(move: Move) -> Int {
   }
 }
 
-pub fn part1() -> Result(Int, String) {
-  try input = read_input("./data/01/input.txt")
-
+fn count_increases(input) {
   let moves =
     input
     |> list.window_by_2
@@ -38,10 +36,30 @@ pub fn part1() -> Result(Int, String) {
         False -> Decrease
       }
     })
+
   let increases =
     moves
     |> list.map(count_move)
     |> int.sum
+}
+
+pub fn part1() -> Result(Int, String) {
+  try input = read_input("./data/01/input.txt")
+
+  let increases = count_increases(input)
+
+  Ok(increases)
+}
+
+pub fn part2() -> Result(Int, String) {
+  try input = read_input("./data/01/input.txt")
+
+  let sums =
+    input
+    |> list.window(by: 3)
+    |> list.map(int.sum)
+
+  let increases = count_increases(sums)
 
   Ok(increases)
 }
