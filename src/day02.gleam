@@ -61,3 +61,29 @@ pub fn part1(input: String) {
 
   Ok(position.hor * position.depth)
 }
+
+type PositionV2 {
+  PositionV2(hor: Int, depth: Int, aim: Int)
+}
+
+fn move_v2(pos: PositionV2, operation: #(Op, Int)) -> PositionV2 {
+  let #(op, dist) = operation
+  case op {
+    Forward ->
+      PositionV2(..pos, hor: pos.hor + dist, depth: pos.depth + pos.aim * dist)
+    Down -> PositionV2(..pos, aim: pos.aim + dist)
+    Up -> PositionV2(..pos, aim: pos.aim - dist)
+  }
+}
+
+pub fn part2(input: String) {
+  try input = read_input(input)
+
+  let initial = PositionV2(0, 0, 0)
+
+  let position =
+    input
+    |> list.fold(from: initial, with: move_v2)
+
+  Ok(position.hor * position.depth)
+}
