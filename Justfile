@@ -4,6 +4,9 @@ utils:
 day01:
 	rebar3 eunit --module=day01_test
 
+day02:
+	rebar3 eunit --module=day02_test
+
 day05:
 	rebar3 eunit --module=day05_test
 
