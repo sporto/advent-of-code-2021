@@ -57,8 +57,13 @@ pub fn to_binary(num: Int) -> List(Bool) {
   to_binary_(num, [])
 }
 
-pub fn to_binary_string(num: Int) -> String {
+pub fn int_to_binary_string(num: Int) -> String {
   to_binary(num)
+  |> binary_to_string
+}
+
+pub fn binary_to_string(bin: List(Bool)) -> String {
+  bin
   |> list.map(fn(v) {
     case v {
       True -> "1"
@@ -68,15 +73,15 @@ pub fn to_binary_string(num: Int) -> String {
   |> string.join("")
 }
 
-fn from_binary_(total: Int, bin: List(Bool)) -> Int {
+fn binary_to_int_(total: Int, bin: List(Bool)) -> Int {
   case bin {
     [] -> total
-    [first, ..rest] -> from_binary_(total * 2 + bool.to_int(first), rest)
+    [first, ..rest] -> binary_to_int_(total * 2 + bool.to_int(first), rest)
   }
 }
 
-pub fn from_binary(bin: List(Bool)) -> Int {
-  from_binary_(0, bin)
+pub fn binary_to_int(bin: List(Bool)) -> Int {
+  binary_to_int_(0, bin)
 }
 
 pub fn from_binary_string(bin: String) -> Int {
@@ -90,5 +95,5 @@ pub fn from_binary_string(bin: String) -> Int {
       _ -> Error(Nil)
     }
   })
-  |> from_binary
+  |> binary_to_int
 }
