@@ -7,6 +7,9 @@ day01:
 day02:
 	rebar3 eunit --module=day02_test
 
+day03:
+	rebar3 eunit --module=day03_test
+
 day05:
 	rebar3 eunit --module=day05_test
 

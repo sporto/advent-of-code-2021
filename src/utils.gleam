@@ -9,6 +9,9 @@ import gleam/bool
 pub external fn read_file(name: String) -> Result(String, Dynamic) =
   "file" "read_file"
 
+pub external fn rem(Int, Int) -> Int =
+  "erlang" "rem"
+
 pub fn split_lines(file: String) -> List(String) {
   string.split(file, "\n")
 }
@@ -33,4 +36,59 @@ pub fn abs(num) {
     True -> num
     False -> num * -1
   }
+}
+
+fn to_binary_(num: Int, acc: List(Bool)) -> List(Bool) {
+  case num == 0 {
+    True -> acc
+    False -> {
+      let quotient = num / 2
+      let remainder = rem(num, 2)
+      let bit = case remainder {
+        0 -> False
+        _ -> True
+      }
+      to_binary_(quotient, list.append([bit], acc))
+    }
+  }
+}
+
+pub fn to_binary(num: Int) -> List(Bool) {
+  to_binary_(num, [])
+}
+
+pub fn to_binary_string(num: Int) -> String {
+  to_binary(num)
+  |> list.map(fn(v) {
+    case v {
+      True -> "1"
+      False -> "0"
+    }
+  })
+  |> string.join("")
+}
+
+fn from_binary_(total: Int, bin: List(Bool)) -> Int {
+  case bin {
+    [] -> total
+    [first, ..rest] -> from_binary_(total * 2 + bool.to_int(first), rest)
+  }
+}
+
+pub fn from_binary(bin: List(Bool)) -> Int {
+  from_binary_(0, bin)
+}
+
+pub fn from_binary_string(bin: String) -> Int {
+  bin
+  |> string.to_graphemes
+  |> list.filter_map(int.parse)
+  |> list.filter_map(fn(n) {
+    case n {
+      0 -> Ok(False)
+      1 -> Ok(True)
+      _ -> Error(Nil)
+    }
+  })
+  |> from_binary
 }
