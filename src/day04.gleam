@@ -1,3 +1,4 @@
+import gleam/bool
 import gleam/int
 import gleam/list
 import gleam/result
@@ -71,13 +72,67 @@ fn read_input(file: String) {
   try boards = get_boards(file)
 
   // io.debug(call_sequence)
-  io.debug(boards)
+  // io.debug(boards)
+  Ok(#(call_sequence, boards))
+}
 
-  Ok(call_sequence)
+fn are_all_picked(played, row) {
+  row
+  |> list.all(fn(n) { list.contains(played, n) })
+}
+
+fn check_winner(board: Board, played: List(Int)) -> Bool {
+  let has_winning_row =
+    board
+    |> list.any(fn(row) { are_all_picked(played, row) })
+
+  let has_winning_col =
+    board
+    |> list.transpose
+    |> list.any(fn(row) { are_all_picked(played, row) })
+
+  has_winning_row || has_winning_col
+}
+
+fn calculate_score(last_n, played, board) {
+  let unmarked_numbers =
+    board
+    |> list.flatten
+    |> list.filter(fn(n) {
+      list.contains(played, n)
+      |> bool.negate
+    })
+
+  let sum =
+    unmarked_numbers
+    |> int.sum
+
+  sum * last_n
+}
+
+fn play(played, remainder, boards) {
+  case remainder {
+    [] -> Error("No winner")
+    [n, ..rest] -> {
+      let next_played = [n, ..played]
+      //
+      let maybe_winner =
+        boards
+        |> list.find(fn(board) { check_winner(board, next_played) })
+      //
+      case maybe_winner {
+        Ok(winner) -> {
+          let score = calculate_score(n, next_played, winner)
+          Ok(score)
+        }
+        Error(_) -> play(next_played, rest, boards)
+      }
+    }
+  }
 }
 
 pub fn part1(file: String) {
-  try input = read_input(file)
+  try #(sequence, boards) = read_input(file)
 
-  Ok(0)
+  play([], sequence, boards)
 }
