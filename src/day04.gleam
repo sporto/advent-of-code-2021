@@ -136,3 +136,38 @@ pub fn part1(file: String) {
 
   play([], sequence, boards)
 }
+
+fn find_worst(played, remainder, boards) {
+  case remainder {
+    [] -> Error("Not found")
+    [n, ..rest] -> {
+      // io.debug("play")
+      // io.debug(n)
+      let next_played = [n, ..played]
+      //
+      let #(winners, not_winners) =
+        boards
+        |> list.partition(fn(b) { check_winner(b, next_played) })
+      //
+      case not_winners {
+        [] ->
+          case winners {
+            [] -> Error("Not found")
+            [b] -> {
+              let score = calculate_score(n, next_played, b)
+              Ok(score)
+            }
+          }
+        _ ->
+          // Keep going
+          find_worst(next_played, rest, not_winners)
+      }
+    }
+  }
+}
+
+pub fn part2(file: String) {
+  try #(sequence, boards) = read_input(file)
+
+  find_worst([], sequence, boards)
+}
