@@ -3,6 +3,7 @@ import gleam/io
 import gleam/result
 import gleam/list
 import gleam/string
+import gleam/set
 import gleam/bool
 import gleam/option.{None, Some}
 import gleam/map.{Map}
@@ -87,7 +88,12 @@ fn get_line_max_y(l: Line) -> Int {
   int.max(p1.y, p2.y)
 }
 
-fn add_line_hv(max_point: Point, grid: Grid, line: Line) -> Grid {
+fn add_line(
+  // max_point: Point,
+  grid: Grid,
+  line: Line,
+  line_contains: fn(Line, Point) -> Bool,
+) -> Grid {
   // map values on the given line
   let x_range = list.range(get_line_min_x(line), get_line_max_x(line) + 1)
   let y_range = list.range(get_line_min_y(line), get_line_max_y(line) + 1)
@@ -99,7 +105,7 @@ fn add_line_hv(max_point: Point, grid: Grid, line: Line) -> Grid {
     with: fn(acc, coor) {
       let #(x, y) = coor
       let point = Point(x, y)
-      case line_contains_hv(line, point) {
+      case line_contains(line, point) {
         True ->
           map.update(
             acc,
@@ -129,12 +135,12 @@ fn is_ver(line: Line) {
 
 fn line_contains_hv(line: Line, c: Point) -> Bool {
   case is_hor(line) || is_ver(line) {
-    True -> line_contains(line, c)
+    True -> line_contains_all(line, c)
     False -> False
   }
 }
 
-fn line_contains(line: Line, c: Point) -> Bool {
+fn line_contains_all_old(line: Line, c: Point) -> Bool {
   let #(a, b) = line
   //
   let crossproduct =
@@ -157,7 +163,31 @@ fn line_contains(line: Line, c: Point) -> Bool {
   cond_crossproduct && cond_dotproduct && cond_squared
 }
 
-fn line_to_points(l: Line) -> List(Point) {
+fn points_in_line(line: Line) -> List(Point) {
+  let #(a, b) = line
+  let range_x = list.range(a.x, b.x + 1)
+  let range_y = list.range(a.y, b.y + 1)
+  let point_set =
+    utils.fold_ranges(
+      xs: range_x,
+      ys: range_y,
+      from: set.new(),
+      with: fn(acc, coor) {
+        let #(x, y) = coor
+        set.insert(acc, Point(x, y))
+      },
+    )
+  point_set
+  |> set.to_list
+}
+
+fn line_contains_all(line: Line, c: Point) -> Bool {
+  let points = points_in_line(line)
+  points
+  |> list.any(fn(p) { p == c })
+}
+
+fn line_to_edge_points(l: Line) -> List(Point) {
   let #(p1, p2) = l
   [p1, p2]
 }
@@ -165,7 +195,7 @@ fn line_to_points(l: Line) -> List(Point) {
 fn get_max_point(lines: List(Line)) -> Point {
   let points =
     lines
-    |> list.map(line_to_points)
+    |> list.map(line_to_edge_points)
     |> list.flatten
   let min_x = 0
   let max_x =
@@ -185,30 +215,17 @@ fn get_max_point(lines: List(Line)) -> Point {
   let range_y = list.range(min_y, max_y + 1)
   //
   Point(max_x + 1, max_y + 1)
-  // list.fold(
-  //   over: range_x,
-  //   from: map.new(),
-  //   with: fn(grid1, x) {
-  //     list.fold(
-  //       over: range_y,
-  //       from: grid1,
-  //       with: fn(grid2, y) {
-  //         map.insert(into: grid2, for: Point(x, y), insert: 0)
-  //       },
-  //     )
-  //   },
-  // )
 }
 
-fn build_grid_hv(lines: List(Line)) -> Grid {
-  let max_point = get_max_point(lines)
+fn build_grid(lines: List(Line), line_contains) -> Grid {
+  // let max_point = get_max_point(lines)
   let empty_grid = map.new()
   // io.debug(empty_grid)
   // grid
   list.fold(
     over: lines,
     from: empty_grid,
-    with: fn(grid, line) { add_line_hv(max_point, grid, line) },
+    with: fn(grid, line) { add_line( grid, line, line_contains) },
   )
 }
 
@@ -259,10 +276,10 @@ fn print_matrix(matrix) {
   })
 }
 
-pub fn part1(file: String) {
+fn run(file: String, line_contains) {
   try input = read_input(file)
 
-  let grid = build_grid_hv(input)
+  let grid = build_grid(input, line_contains)
   // let matrix = grid_to_matrix(grid)
   // print_matrix(matrix)
   let with_2_or_more =
@@ -272,4 +289,12 @@ pub fn part1(file: String) {
     |> list.length
 
   Ok(with_2_or_more)
+}
+
+pub fn part1(file: String) {
+  run(file, line_contains_hv)
+}
+
+pub fn part2(file: String) {
+  run(file, line_contains_all)
 }
