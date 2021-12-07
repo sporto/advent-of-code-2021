@@ -20,14 +20,17 @@ pub fn get_input_lines(
   file_name: String,
   parse_line: fn(String) -> Result(a, String),
 ) -> Result(List(a), String) {
-  try file =
-    read_file(file_name)
-    |> result.replace_error("Could not read file")
+  case read_file(file_name) {
+    Error(_) -> Error("Could not read file")
+    Ok(file) -> {
 
-  file
-  |> split_lines
-  |> list.map(parse_line)
-  |> result.all
+      file
+      |> split_lines
+      |> list.map(parse_line)
+      |> result.all
+    }
+  }
+
 }
 
 ///

@@ -1,3 +1,5 @@
+import gleeunit
+import gleeunit/should
 import day04
 
 pub fn part1_test() {
@@ -13,5 +15,5 @@ pub fn part2_test() {
 }
 
 pub fn part2b_test() {
-  assert Ok(1) = day04.part2("./data/04/input.txt")
+  assert Ok(14877) = day04.part2("./data/04/input.txt")
 }

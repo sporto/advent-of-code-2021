@@ -13,7 +13,7 @@ fn get_call_sequence(file: String) -> Result(List(Int), String) {
   try first_line =
     file
     |> utils.split_lines
-    |> list.head
+    |> list.first
     |> result.replace_error("Couldn't get first line")
 
   first_line

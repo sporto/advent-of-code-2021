@@ -1,3 +1,5 @@
+import gleeunit
+import gleeunit/should
 import day02
 
 pub fn part1_test() {
