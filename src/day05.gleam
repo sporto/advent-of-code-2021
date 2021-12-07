@@ -67,14 +67,56 @@ fn add_point(grid: Grid, point: Point) -> Grid {
   )
 }
 
-fn add_line_hv(grid: Grid, line: Line) -> Grid {
-  map.map_values(
-    in: grid,
-    with: fn(point, current_count) {
-      case line_contains_hv(line, point) {
-        True -> current_count + 1
-        False -> current_count
-      }
+fn get_line_min_x(l: Line) -> Int {
+  let #(p1, p2) = l
+  int.min(p1.x, p2.x)
+}
+
+fn get_line_min_y(l: Line) -> Int {
+  let #(p1, p2) = l
+  int.min(p1.y, p2.y)
+}
+
+fn get_line_max_x(l: Line) -> Int {
+  let #(p1, p2) = l
+  int.max(p1.x, p2.x)
+}
+
+fn get_line_max_y(l: Line) -> Int {
+  let #(p1, p2) = l
+  int.max(p1.y, p2.y)
+}
+
+fn add_line_hv(max_point: Point, grid: Grid, line: Line) -> Grid {
+  // map values on the given line
+  let x_range = list.range(get_line_min_x(line), get_line_max_x(line) + 1)
+  let y_range = list.range(get_line_min_y(line), get_line_max_y(line) + 1)
+
+  list.fold(
+    over: x_range,
+    from: grid,
+    with: fn(grid1, x) {
+      list.fold(
+        over: y_range,
+        from: grid1,
+        with: fn(grid2, y) {
+          let point = Point(x, y)
+          case line_contains_hv(line, point) {
+            True ->
+              map.update(
+                grid2,
+                update: point,
+                with: fn(op) {
+                  case op {
+                    None -> 1
+                    Some(val) -> val + 1
+                  }
+                },
+              )
+            False -> grid2
+          }
+        },
+      )
     },
   )
 }
@@ -119,51 +161,59 @@ fn line_contains(line: Line, c: Point) -> Bool {
   cond_crossproduct && cond_dotproduct && cond_squared
 }
 
-fn get_line_max_x(l: Line) -> Int {
+fn line_to_points(l: Line) -> List(Point) {
   let #(p1, p2) = l
-  int.max(p1.x, p2.x)
+  [p1, p2]
 }
 
-fn get_line_max_y(l: Line) -> Int {
-  let #(p1, p2) = l
-  int.max(p1.y, p2.y)
-}
-
-fn build_empty_grid(lines: List(Line)) -> Grid {
+fn get_max_point(lines: List(Line)) -> Point {
+  let points =
+    lines
+    |> list.map(line_to_points)
+    |> list.flatten
   let min_x = 0
   let max_x =
-    lines
-    |> list.map(get_line_max_x)
+    points
+    |> list.map(get_x)
     |> list.reduce(int.max)
     |> result.unwrap(0)
+  //
   let min_y = 0
   let max_y =
-    lines
-    |> list.map(get_line_max_y)
+    points
+    |> list.map(get_y)
     |> list.reduce(int.max)
     |> result.unwrap(0)
+  //
   let range_x = list.range(min_x, max_x + 1)
   let range_y = list.range(min_y, max_y + 1)
-  list.fold(
-    over: range_x,
-    from: map.new(),
-    with: fn(grid1, x) {
-      list.fold(
-        over: range_y,
-        from: grid1,
-        with: fn(grid2, y) {
-          map.insert(into: grid2, for: Point(x, y), insert: 0)
-        },
-      )
-    },
-  )
+  //
+  Point(max_x + 1, max_y + 1)
+  // list.fold(
+  //   over: range_x,
+  //   from: map.new(),
+  //   with: fn(grid1, x) {
+  //     list.fold(
+  //       over: range_y,
+  //       from: grid1,
+  //       with: fn(grid2, y) {
+  //         map.insert(into: grid2, for: Point(x, y), insert: 0)
+  //       },
+  //     )
+  //   },
+  // )
 }
 
 fn build_grid_hv(lines: List(Line)) -> Grid {
-  let empty_grid = build_empty_grid(lines)
-  // io.debug(grid)
+  let max_point = get_max_point(lines)
+  let empty_grid = map.new()
+  // io.debug(empty_grid)
   // grid
-  list.fold(over: lines, from: empty_grid, with: add_line_hv)
+  list.fold(
+    over: lines,
+    from: empty_grid,
+    with: fn(grid, line) { add_line_hv(max_point, grid, line) },
+  )
 }
 
 fn grid_to_matrix(grid: Grid) {
