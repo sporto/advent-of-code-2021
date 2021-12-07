@@ -97,3 +97,22 @@ pub fn from_binary_string(bin: String) -> Int {
   })
   |> binary_to_int
 }
+
+pub fn fold_ranges(
+  xs xs: List(Int),
+  ys ys: List(Int),
+  from from: acc,
+  with with: fn(acc, #(Int, Int)) -> acc,
+) -> acc {
+  list.fold(
+    over: xs,
+    from: from,
+    with: fn(from1, x) {
+      list.fold(
+        over: ys,
+        from: from1,
+        with: fn(from2, y) { with(from2, #(x, y)) },
+      )
+    },
+  )
+}

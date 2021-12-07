@@ -92,31 +92,27 @@ fn add_line_hv(max_point: Point, grid: Grid, line: Line) -> Grid {
   let x_range = list.range(get_line_min_x(line), get_line_max_x(line) + 1)
   let y_range = list.range(get_line_min_y(line), get_line_max_y(line) + 1)
 
-  list.fold(
-    over: x_range,
+  utils.fold_ranges(
+    xs: x_range,
+    ys: y_range,
     from: grid,
-    with: fn(grid1, x) {
-      list.fold(
-        over: y_range,
-        from: grid1,
-        with: fn(grid2, y) {
-          let point = Point(x, y)
-          case line_contains_hv(line, point) {
-            True ->
-              map.update(
-                grid2,
-                update: point,
-                with: fn(op) {
-                  case op {
-                    None -> 1
-                    Some(val) -> val + 1
-                  }
-                },
-              )
-            False -> grid2
-          }
-        },
-      )
+    with: fn(acc, coor) {
+      let #(x, y) = coor
+      let point = Point(x, y)
+      case line_contains_hv(line, point) {
+        True ->
+          map.update(
+            acc,
+            update: point,
+            with: fn(op) {
+              case op {
+                None -> 1
+                Some(val) -> val + 1
+              }
+            },
+          )
+        False -> acc
+      }
     },
   )
 }
