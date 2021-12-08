@@ -17,23 +17,24 @@ pub const input = [
   2, 1, 4,
 ]
 
-fn loop_fish(fish) {
+fn step_fish(fish) {
   case fish {
     0 -> [6, 8]
     _ -> [fish - 1]
   }
 }
 
+fn step_fishes(fishes) {
+  case fishes {
+    [] -> []
+    [f, ..rest] -> list.append(step_fish(f), step_fishes(rest))
+  }
+}
+
 fn loop(day: Int, fishes: List(Int)) {
   case day {
     0 -> fishes
-    _ -> {
-      let next =
-        fishes
-        |> list.map(loop_fish)
-        |> list.flatten
-      loop(day - 1, next)
-    }
+    _ -> loop(day - 1, step_fishes(fishes))
   }
 }
 
