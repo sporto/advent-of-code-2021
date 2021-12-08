@@ -30,5 +30,5 @@ pub fn part2_test() {
 }
 
 pub fn part2b_test() {
-  assert Ok(1) = day05.part2("./data/05/input.txt")
+  assert Ok(22364) = day05.part2("./data/05/input.txt")
 }
