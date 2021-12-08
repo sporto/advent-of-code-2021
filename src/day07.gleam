@@ -1,6 +1,7 @@
 import gleam/list
 import gleam/int
 import gleam/io
+import gleam/float
 import gleam/result
 
 pub const test_input = [16, 1, 2, 0, 4, 2, 7, 1, 2, 14]
@@ -90,6 +91,12 @@ fn find_mean(input: List(Int)) -> List(Int) {
   }
 }
 
+fn find_average(input: List(Int)) -> Float {
+  let len = list.length(input)
+  let sum = int.sum(input)
+  int.to_float(sum) /. int.to_float(len)
+}
+
 fn get_distances_to(n: Int, subs: List(Int)) -> List(Int) {
   subs
   |> list.map(fn(sub) {
@@ -98,8 +105,33 @@ fn get_distances_to(n: Int, subs: List(Int)) -> List(Int) {
   })
 }
 
+fn triangular_number_fuel(target: Int, sub: Int) -> Int {
+  let abs =
+    sub - target
+    |> int.absolute_value
+
+  // Triangular numbers sequence
+  // 1 -> 1
+  // 2 -> 2 + 1 = 3
+  // 3 -> 3 + 3 = 6
+  // 4 -> 4 + 6 = 10
+  // 5 -> 5 + 10 = 15
+  //6 -> 6 + 15 = 21
+  abs * { abs + 1 } / 2
+}
+
+fn part2_get_fuel_to(n: Int, subs: List(Int)) -> List(Int) {
+  subs
+  |> list.map(fn(sub) { triangular_number_fuel(n, sub) })
+}
+
 fn get_total_distance_to(n, subs) -> Int {
   get_distances_to(n, subs)
+  |> int.sum
+}
+
+fn part2_get_fuel_distance_to(n: Int, subs: List(Int)) -> Int {
+  part2_get_fuel_to(n, subs)
   |> int.sum
 }
 
@@ -109,6 +141,21 @@ pub fn part1(input) {
   // |> io.debug
   mean
   |> list.map(fn(n) { get_total_distance_to(n, input) })
+  |> list.reduce(int.min)
+  |> result.unwrap(0)
+  |> io.debug
+}
+
+pub fn part2(input) {
+  let avg = find_average(input)
+
+  [
+    float.floor(avg)
+    |> float.truncate,
+    float.ceiling(avg)
+    |> float.truncate,
+  ]
+  |> list.map(fn(n: Int) { part2_get_fuel_distance_to(n, input) })
   |> list.reduce(int.min)
   |> result.unwrap(0)
   |> io.debug
