@@ -1,7 +1,10 @@
 import gleam/io
+import gleam/int
 import day06
 
 pub fn main() {
-  day06.part1(day06.input)
-  |> io.debug
+  // 26984457539
+  day06.part2(day06.test_input)
+  |> int.to_string
+  |> io.println
 }

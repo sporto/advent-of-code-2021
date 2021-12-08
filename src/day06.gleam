@@ -1,4 +1,9 @@
 import gleam/list
+import gleam/map.{Map}
+import gleam/int
+import gleam/io
+import gleam/result
+import gleam/option.{None, Some}
 
 pub const test_input = [3, 4, 3, 1, 2]
 
@@ -31,14 +36,84 @@ fn step_fishes(fishes) {
   }
 }
 
-fn loop(day: Int, fishes: List(Int)) {
+// This is too slow
+fn loop_v1(day: Int, fishes: List(Int)) {
   case day {
     0 -> fishes
-    _ -> loop(day - 1, step_fishes(fishes))
+    _ -> loop_v1(day - 1, step_fishes(fishes))
   }
 }
 
+fn loop_v2_day(counts: Map(Int, Int)) -> Map(Int, Int) {
+  let count_in_zero =
+    counts
+    |> map.get(0)
+    |> result.unwrap(0)
+  //
+  let increment = fn(op) {
+    case op {
+      None -> count_in_zero
+      Some(v) -> v + count_in_zero
+    }
+  }
+
+  // Reduce the timer for all
+  map.fold(
+    over: counts,
+    from: map.new(),
+    with: fn(acc: Map(Int, Int), timer, count) {
+      map.insert(acc, timer - 1, count)
+    },
+  )
+  // Remove -1
+  |> map.delete(-1)
+  // Everyone in -1 goes to 6
+  |> map.update(6, increment)
+  // For everyone in -1 create a new 8
+  |> map.update(8, increment)
+}
+
+fn loop_v2(day: Int, counts: Map(Int, Int)) -> Map(Int, Int) {
+  case day {
+    0 -> counts
+    _ -> loop_v2(day - 1, loop_v2_day(counts))
+  }
+}
+
+fn make_count_map(input: List(Int)) -> Map(Int, Int) {
+  let add = fn(acc, i) {
+    map.update(
+      acc,
+      update: i,
+      with: fn(op) {
+        case op {
+          None -> 1
+          Some(cur) -> cur + 1
+        }
+      },
+    )
+  }
+  list.fold(over: input, from: map.new(), with: add)
+}
+
 pub fn part1(input) {
-  loop(80, input)
-  |> list.length
+  // loop(80, input)
+  // |> list.length
+  let counts = make_count_map(input)
+  // io.debug(counts)
+  loop_v2(80, counts)
+  |> count_total
+}
+
+fn count_total(counts: Map(Int, Int)) -> Int {
+  counts
+  |> map.values
+  |> int.sum
+}
+
+pub fn part2(input) {
+  let counts = make_count_map(input)
+  // io.debug(counts)
+  loop_v2(256, counts)
+  |> count_total
 }
