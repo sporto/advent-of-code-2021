@@ -222,3 +222,7 @@ pub fn part2_test() {
 pub fn part2_mini() {
   part2("./data/08/test_one.txt")
 }
+
+pub fn part2_main() {
+  part2("./data/08/input.txt")
+}
