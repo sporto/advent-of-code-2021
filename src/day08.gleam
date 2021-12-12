@@ -4,9 +4,10 @@ import gleam/result
 import gleam/io
 import gleam/string
 import gleam/int
-import gleam/set
+import gleam/set.{Set}
 import gleam/pair
 import gleam/bool
+import gleam/option.{None, Option, Some}
 import gleam/map.{Map}
 
 pub type Line {
@@ -57,6 +58,11 @@ const digits = [
 
 const segments = [A, B, C, D, E, F, G]
 
+fn all_segments() {
+  [A, B, C, D, E, F, G]
+  |> set.from_list
+}
+
 fn parse_line(line: String) -> Result(Line, String) {
   try #(in, out) =
     string.split_once(line, " | ")
@@ -75,6 +81,7 @@ fn read_input(file: String) {
   utils.get_input_lines(file, parse_line)
 }
 
+// PART 1
 fn unique_lens() {
   digits
   |> list.map(get_digit_segments)
@@ -104,161 +111,98 @@ pub fn part1(input) {
   Ok(sum)
 }
 
+// PART 2
 fn resolve_line_output(l: Line) -> Result(Int, String) {
   let all = list.append(l.input, l.output)
-  // resolve(all, map.new())
-  let matches =
+
+  let segments =
     all
     |> list.sort(string.compare)
     |> list.unique
-    |> list.map(segment_matches)
+    |> list.map(seg_to_set)
 
-  // |> io.debug
-  let uniques =
-    matches
-    |> find_uniques
+  // 1
+  try one = find_with_len(segments, 2)
 
-  let known =
-    uniques
-    |> map.values()
+  // 4
+  try four = find_with_len(segments, 4)
 
-  // |> io.debug
-  // |> list.map(what_cannot_be)
-  // |> list.flatten
-  // |> io.debug
-  // reduce(matches, map.new())
-  // |> io.debug
-  try one =
-    map.get(uniques, 1)
-    |> result.replace_error("Couldn't find 1")
-  try four =
-    map.get(uniques, 7)
-    |> result.replace_error("Couldn't find 7")
-  try seven =
-    map.get(uniques, 7)
-    |> result.replace_error("Couldn't find 7")
-  try eight =
-    map.get(uniques, 8)
-    |> result.replace_error("Couldn't find 8")
+  let l_in_four = utils.set_diff(four, one)
 
-  let remainder =
-    matches
-    |> list.filter(fn(m) {
-      list.contains(known, pair.first(m))
-      |> bool.negate
-    })
-
-  // Given 1 and 7 we can find segment A
-  try a = find_segment_a(one, seven)
-
-  // |> io.debug
-  // We can find using 1
-  // try two = 
-  //   find_two(one, )
-  // Knowing A we can find 4
-  // try four =
-  //   find_four(remainder, a)
-  //   |> io.debug
-  Ok(0)
-}
-
-fn find_segment_a(one, seven) {
-  // Segment that doesn't appear in one
-  find_segment_diff(seven, one)
-  |> Ok
-}
-
-// fn find_four(lookup, a: String) {
-//   // 4 is the only one without a
-//   io.debug(a)
-//   lookup
-//   |> io.debug
-//   |> list.find(fn(t) {
-//     string.contains(pair.first(t), a)
-//     |> bool.negate
-//   })
-//   |> result.replace_error("Couldn't find 4")
-// }
-fn find_segment_diff(bigger, smaller) -> String {
-  let bigger_set =
-    string.to_graphemes(bigger)
-    |> set.from_list
-  let smaller_set =
-    string.to_graphemes(smaller)
-    |> set.from_list
-
-  let all = set.union(bigger_set, smaller_set)
-  let intersection = set.intersection(bigger_set, smaller_set)
-  let diff =
-    set.fold(
-      over: all,
-      from: set.new(),
-      with: fn(acc, member) {
-        case set.contains(intersection, member) {
-          True -> acc
-          False -> set.insert(acc, member)
-        }
+  try mapping_list =
+    list.try_map(
+      segments,
+      fn(seg) {
+        try n = find_num(seg, one, l_in_four)
+        Ok(#(seg, n))
       },
     )
-  diff
-  |> set.to_list
-  |> string.join("")
-}
 
-fn find_uniques(all_matches) {
-  // 4 uniques
-  // 1 -> 2 chars
-  // 4 -> 4 chars
-  // 7 -> 3 chars
-  // 8 -> 7 chars
-  list.fold(
-    over: all_matches,
-    from: map.new(),
-    with: fn(acc, tup: #(String, List(Digit))) {
-      let #(seq, digits) = tup
-      case digits {
-        [one] -> map.insert(acc, one.n, seq)
-        _ -> acc
-      }
-    },
-  )
-}
+  let mapping = map.from_list(mapping_list)
 
-fn segment_matches(segment: String) -> #(String, List(Digit)) {
-  // Find all the segments that match
-  let len = string.length(segment)
-  let matches =
-    digits
-    |> list.filter(fn(dig: Digit) {
-      dig.segs
-      |> list.length == len
+  try digits =
+    l.output
+    |> list.map(seg_to_set)
+    |> list.try_map(fn(sequence) {
+      map.get(mapping, sequence)
+      |> result.replace_error("Couldn't find the n")
     })
 
-  #(segment, matches)
+  digits
+  |> list.map(int.to_string)
+  |> string.join("")
+  |> int.parse
+  |> result.replace_error("Couldn't parse")
 }
 
-// fn what_cannot_be(t) {
-//   let #(segment, matches) = t
-//   let seg_chars = string.to_graphemes(segment)
-//   let all_match_chars =
-//     string.join(matches, "")
-//     |> string.to_graphemes
-//     |> list.unique
-//   let not_matched =
-//     chars
-//     |> list.filter(fn(c) {
-//       list.contains(all_match_chars, c)
-//       |> bool.negate
-//     })
-//   seg_chars
-//   |> list.map(fn(c) { #(c, not_matched) })
-// }
+fn seg_to_set(seg: String) -> Set(String) {
+  seg
+  |> string.to_graphemes
+  |> set.from_list
+}
+
+fn find_with_len(segments, len) {
+  list.find(segments, fn(seg) { set.size(seg) == len })
+  |> result.replace_error("Couldn't find")
+}
+
+fn find_num(seg, one, l_in_four) {
+  case set.size(seg) {
+    2 -> Ok(1)
+    3 -> Ok(7)
+    4 -> Ok(4)
+    5 ->
+      // Either 2 3 5
+      case utils.set_includes(seg, one) {
+        True -> Ok(3)
+        False ->
+          case utils.set_includes(seg, l_in_four) {
+            True -> Ok(5)
+            False -> Ok(2)
+          }
+      }
+    6 ->
+      // Either 0 6 9
+      case utils.set_includes(seg, l_in_four) {
+        True ->
+          case utils.set_includes(seg, one) {
+            True -> Ok(9)
+            False -> Ok(6)
+          }
+        False -> Ok(0)
+      }
+    7 -> Ok(8)
+    _ -> Error("Unexpected len")
+  }
+}
+
 pub fn part2(input: String) {
   try input = read_input(input)
   try sum =
     input
     |> list.map(resolve_line_output)
     |> result.all
+    |> io.debug
     |> result.map(int.sum)
   Ok(sum)
 }

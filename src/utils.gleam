@@ -6,6 +6,7 @@ import gleam/int
 import gleam/result
 import gleam/map.{Map}
 import gleam/bool
+import gleam/set.{Set}
 
 pub external fn read_file(name: String) -> Result(String, Dynamic) =
   "file" "read_file"
@@ -135,4 +136,23 @@ pub fn count(l: List(a)) -> Map(a, Int) {
       )
     },
   )
+}
+
+// Find the elements that are in one but not in two
+pub fn set_diff(one: Set(a), two: Set(a)) -> Set(a) {
+  set.fold(
+    over: one,
+    from: set.new(),
+    with: fn(acc, member) {
+      case set.contains(two, member) {
+        True -> acc
+        False -> set.insert(acc, member)
+      }
+    },
+  )
+}
+
+// Is two included in one
+pub fn set_includes(one: Set(a), two: Set(a)) -> Bool {
+  set.intersection(one, two) == two
 }
