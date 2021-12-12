@@ -14,55 +14,6 @@ pub type Line {
   Line(input: List(String), output: List(String))
 }
 
-// Bit Map
-// 
-//  aaaa 1
-// b 2  c 3
-// b    c
-//  dddd 4
-// e 5  f 6
-// e    f
-//  gggg 7
-//
-//
-type Seg {
-  A
-  B
-  C
-  D
-  E
-  F
-  G
-}
-
-type Digit {
-  Digit(n: Int, segs: List(Seg))
-}
-
-fn get_digit_segments(dig: Digit) -> List(Seg) {
-  dig.segs
-}
-
-const digits = [
-  Digit(0, [A, B, C, E, F, G]),
-  Digit(1, [C, F]),
-  Digit(2, [A, C, D, E, G]),
-  Digit(3, [A, C, D, F, G]),
-  Digit(4, [B, C, D, F]),
-  Digit(5, [A, B, D, F, G]),
-  Digit(6, [A, B, D, E, F, G]),
-  Digit(7, [A, C, F]),
-  Digit(8, [A, B, C, D, E, F, G]),
-  Digit(9, [A, B, C, D, F, G]),
-]
-
-const segments = [A, B, C, D, E, F, G]
-
-fn all_segments() {
-  [A, B, C, D, E, F, G]
-  |> set.from_list
-}
-
 fn parse_line(line: String) -> Result(Line, String) {
   try #(in, out) =
     string.split_once(line, " | ")
@@ -82,17 +33,9 @@ fn read_input(file: String) {
 }
 
 // PART 1
-fn unique_lens() {
-  digits
-  |> list.map(get_digit_segments)
-  |> list.map(list.length)
-  |> utils.count
-  |> map.filter(fn(k, v) { v == 1 })
-  |> map.keys
-}
 
 fn count_unique(segments) {
-  let uniq = unique_lens()
+  let uniq = [2, 3, 4, 7]
   segments
   |> list.map(string.length)
   |> list.filter(fn(n) { list.contains(uniq, n) })
