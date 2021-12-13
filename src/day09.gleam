@@ -101,34 +101,43 @@ fn points_around(points_map: PointMap, point: Point) -> List(#(Point, Int)) {
 }
 
 fn find_basin(points_map: PointMap, point: Point) -> Set(Point) {
-  find_basin_rec(points_map, point, set.new())
+  find_basin_rec(points_map, [point], set.new())
 }
 
 fn find_basin_rec(
   points_map: Map(Point, Int),
-  point: Point,
+  points: List(Point),
   found: Set(Point),
 ) -> Set(Point) {
-  let maybe_elevation = map.get(points_map, point)
-  let not_inspected =
-    set.contains(found, point)
-    |> bool.negate
-  case maybe_elevation {
-    Error(Nil) -> found
-    Ok(elevation) ->
-      case elevation < 9 && not_inspected {
-        True -> {
-          let next_found = set.insert(found, point)
-          let surrounding_points =
-            points_around(points_map, point)
-            |> list.map(pair.first)
-          let all_points =
-            surrounding_points
-            |> list.map(find_basin_rec(points_map, _, next_found))
-          list.fold(all_points, next_found, fn(acc, s) { set.union(acc, s) })
+  case points {
+    [] -> found
+    [first, ..rest] -> {
+      let inspected = set.contains(found, first)
+      case inspected {
+        True -> find_basin_rec(points_map, rest, found)
+        False -> {
+          let maybe_elevation = map.get(points_map, first)
+          case maybe_elevation {
+            Ok(elevation) ->
+              case elevation < 9 {
+                True -> {
+                  let next_found = set.insert(found, first)
+                  let surrounding_points =
+                    points_around(points_map, first)
+                    |> list.map(pair.first)
+                  find_basin_rec(
+                    points_map,
+                    list.append(surrounding_points, rest),
+                    next_found,
+                  )
+                }
+                False -> find_basin_rec(points_map, rest, found)
+              }
+            Error(Nil) -> find_basin_rec(points_map, rest, found)
+          }
         }
-        False -> found
       }
+    }
   }
 }
 
