@@ -56,6 +56,39 @@ pub fn part1(input) {
   Ok(result)
 }
 
+pub fn part2(input) {
+  try input = read_input(input)
+  let points_map = matrix.to_map(input)
+  // Find the lowest points
+  let lowest =
+    map.filter(
+      points_map,
+      fn(point, elevation) {
+        let points = points_around(points_map, point)
+        let min_elevation =
+          points
+          |> list.map(pair.second)
+          |> utils.list_min(elevation + 1)
+        elevation < min_elevation
+      },
+    )
+
+  let basins = map.map_values(lowest, fn(p, e) { find_basin(points_map, p) })
+
+  // |> io.debug
+  // Keep the three largest
+  let results =
+    basins
+    |> map.values
+    |> list.map(set.size)
+    |> list.sort(int.compare)
+    |> list.reverse
+    |> list.take(3)
+    |> io.debug
+
+  Ok(list.fold(results, 1, fn(a, b) { a * b }))
+}
+
 fn points_around(points_map: PointMap, point: Point) -> List(#(Point, Int)) {
   let #(x, y) = point
   [#(x - 1, y), #(x, y + 1), #(x + 1, y), #(x, y - 1)]
@@ -67,10 +100,50 @@ fn points_around(points_map: PointMap, point: Point) -> List(#(Point, Int)) {
   })
 }
 
+fn find_basin(points_map: PointMap, point: Point) -> Set(Point) {
+  find_basin_rec(points_map, point, set.new())
+}
+
+fn find_basin_rec(
+  points_map: Map(Point, Int),
+  point: Point,
+  found: Set(Point),
+) -> Set(Point) {
+  let maybe_elevation = map.get(points_map, point)
+  let not_inspected =
+    set.contains(found, point)
+    |> bool.negate
+  case maybe_elevation {
+    Error(Nil) -> found
+    Ok(elevation) ->
+      case elevation < 9 && not_inspected {
+        True -> {
+          let next_found = set.insert(found, point)
+          let surrounding_points =
+            points_around(points_map, point)
+            |> list.map(pair.first)
+          let all_points =
+            surrounding_points
+            |> list.map(find_basin_rec(points_map, _, next_found))
+          list.fold(all_points, next_found, fn(acc, s) { set.union(acc, s) })
+        }
+        False -> found
+      }
+  }
+}
+
 pub fn part1_test() {
   part1("./data/09/test.txt")
 }
 
 pub fn part1_main() {
   part1("./data/09/input.txt")
+}
+
+pub fn part2_test() {
+  part2("./data/09/test.txt")
+}
+
+pub fn part2_main() {
+  part2("./data/09/input.txt")
 }
