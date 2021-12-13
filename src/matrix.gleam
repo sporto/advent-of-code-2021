@@ -1,3 +1,6 @@
+import gleam/list
+import gleam/map.{Map}
+
 pub type Matrix(a) =
   List(List(a))
 
@@ -8,4 +11,13 @@ pub fn fold(
 ) -> Matrix(c) {
   // TODO
   todo
+}
+
+pub fn to_map(matrix: Matrix(a)) -> Map(#(Int, Int), a) {
+  list.index_map(
+    matrix,
+    fn(y, row) { list.index_map(row, fn(x, cell) { #(#(x, y), cell) }) },
+  )
+  |> list.flatten
+  |> map.from_list
 }

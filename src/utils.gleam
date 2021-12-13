@@ -138,6 +138,14 @@ pub fn count(l: List(a)) -> Map(a, Int) {
   )
 }
 
+// LIST
+pub fn list_min(list: List(Int), fallback: Int) -> Int {
+  list
+  |> list.reduce(int.min)
+  |> result.unwrap(fallback)
+}
+
+// SETS
 // Find the elements that are in one but not in two
 pub fn set_diff(one: Set(a), two: Set(a)) -> Set(a) {
   set.fold(
