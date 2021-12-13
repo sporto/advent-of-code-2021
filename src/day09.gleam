@@ -70,3 +70,7 @@ fn points_around(points_map: PointMap, point: Point) -> List(#(Point, Int)) {
 pub fn part1_test() {
   part1("./data/09/test.txt")
 }
+
+pub fn part1_main() {
+  part1("./data/09/input.txt")
+}
