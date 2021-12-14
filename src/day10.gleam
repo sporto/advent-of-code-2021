@@ -35,6 +35,19 @@ fn symbol_to_string(symbol) {
   }
 }
 
+fn opposite_symbol(symbol) {
+  case symbol {
+    ParenOpen -> ParenClose
+    ParenClose -> ParenOpen
+    SquareOpen -> SquareClose
+    SquareClose -> SquareOpen
+    CurlyOpen -> CurlyClose
+    CurlyClose -> CurlyOpen
+    AngleOpen -> AngleClose
+    AngleClose -> AngleOpen
+  }
+}
+
 type Stack =
   Queue(Symbol)
 
@@ -85,19 +98,54 @@ pub fn part1(input) {
   Ok(total)
 }
 
-fn line_to_string(symbols) {
+pub fn part2(input) {
+  try input = read_input(input)
+
+  let incomplete_lines =
+    input
+    |> list.filter_map(process_line)
+    |> list.map(complete_line)
+
+  let count = list.length(incomplete_lines)
+
+  let score =
+    incomplete_lines
+    |> list.map(part2_line_score)
+    |> list.sort(int.compare)
+    |> list.drop(count / 2)
+    |> list.first
+    |> result.replace_error("Couldn't find the middle")
+}
+
+fn part2_line_score(line: List(Symbol)) {
+  list.fold(
+    line,
+    0,
+    fn(score, sym) {
+      let sym_score = case sym {
+        ParenClose -> 1
+        SquareClose -> 2
+        CurlyClose -> 3
+        AngleClose -> 4
+        _ -> 0
+      }
+      score * 5 + sym_score
+    },
+  )
+}
+
+fn line_to_string(symbols: List(Symbol)) -> String {
   symbols
   |> list.map(symbol_to_string)
   |> string.join("")
 }
 
 fn process_line(symbols: List(Symbol)) -> Result(Queue(Symbol), Int) {
-  io.println("  ")
-  io.debug(
-    symbols
-    |> line_to_string,
-  )
-
+  // io.println("  ")
+  // io.debug(
+  //   symbols
+  //   |> line_to_string,
+  // )
   list.try_fold(
     symbols,
     queue.new(),
@@ -114,7 +162,6 @@ fn process_line(symbols: List(Symbol)) -> Result(Queue(Symbol), Int) {
       }
     },
   )
-  |> io.debug
 }
 
 fn pop_expecting(
@@ -141,6 +188,11 @@ fn pop_expecting(
   }
 }
 
+fn complete_line(line: Stack) -> List(Symbol) {
+  queue.to_list(line)
+  |> list.map(opposite_symbol)
+}
+
 fn push(stack: Stack, ele: Symbol) {
   queue.push_front(stack, ele)
 }
@@ -155,4 +207,12 @@ pub fn part1_test() {
 
 pub fn part1_main() {
   part1("./data/10/input.txt")
+}
+
+pub fn part2_test() {
+  part2("./data/10/test.txt")
+}
+
+pub fn part2_main() {
+  part2("./data/10/input.txt")
 }
