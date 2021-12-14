@@ -1,8 +1,8 @@
 import gleam/io
 import gleam/int
-import day09
+import day10
 
 pub fn main() {
-  day09.part2_main()
+  day10.part1_test()
   |> io.debug
 }
