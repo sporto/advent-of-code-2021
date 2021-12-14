@@ -2,6 +2,7 @@ import gleam/io
 import gleam/list
 import gleam/result
 import gleam/string
+import gleam/int
 import gleam/queue.{Queue}
 import utils
 
@@ -16,9 +17,22 @@ type Symbol {
   // {
   CurlyClose
   // }
-  PointyOpen
+  AngleOpen
   // <
-  PointyClose
+  AngleClose
+}
+
+fn symbol_to_string(symbol) {
+  case symbol {
+    ParenOpen -> "("
+    ParenClose -> ")"
+    SquareOpen -> "["
+    SquareClose -> "]"
+    CurlyOpen -> "{"
+    CurlyClose -> "}"
+    AngleOpen -> "<"
+    AngleClose -> ">"
+  }
 }
 
 type Stack =
@@ -33,8 +47,8 @@ fn parse_char(c: String) -> Result(Symbol, String) {
     "]" -> Ok(SquareClose)
     "{" -> Ok(CurlyOpen)
     "}" -> Ok(CurlyClose)
-    "<" -> Ok(PointyOpen)
-    ">" -> Ok(PointyClose)
+    "<" -> Ok(AngleOpen)
+    ">" -> Ok(AngleClose)
     _ -> Error("Invalid char")
   }
 }
@@ -46,7 +60,6 @@ fn parse_line(line: String) {
   |> result.all
 }
 
-// STACK
 fn read_input(file: String) {
   utils.get_input_lines(file, parse_line)
 }
@@ -54,45 +67,81 @@ fn read_input(file: String) {
 pub fn part1(input) {
   try input = read_input(input)
 
-  input
-  |> list.map(run_stack)
-  |> io.debug
+  let results =
+    input
+    |> list.map(process_line)
 
-  Ok(1)
+  // Collect and add the errors
+  let total =
+    results
+    |> list.map(fn(result) {
+      case result {
+        Ok(_) -> 0
+        Error(n) -> n
+      }
+    })
+    |> int.sum
+
+  Ok(total)
 }
 
-fn run_stack(symbols: List(Symbol)) {
+fn line_to_string(symbols) {
+  symbols
+  |> list.map(symbol_to_string)
+  |> string.join("")
+}
+
+fn process_line(symbols: List(Symbol)) -> Result(Queue(Symbol), Int) {
+  io.println("  ")
+  io.debug(
+    symbols
+    |> line_to_string,
+  )
+
   list.try_fold(
     symbols,
     queue.new(),
     fn(stack, symbol) {
       case symbol {
         ParenOpen -> Ok(push(stack, symbol))
-        ParenClose -> pop_expecting(stack, ParenOpen)
+        ParenClose -> pop_expecting(stack, symbol, ParenOpen)
         SquareOpen -> Ok(push(stack, symbol))
-        SquareClose -> pop_expecting(stack, SquareOpen)
+        SquareClose -> pop_expecting(stack, symbol, SquareOpen)
         CurlyOpen -> Ok(push(stack, symbol))
-        CurlyClose -> pop_expecting(stack, CurlyOpen)
-        PointyOpen -> Ok(push(stack, symbol))
-        PointyClose -> pop_expecting(stack, PointyOpen)
+        CurlyClose -> pop_expecting(stack, symbol, CurlyOpen)
+        AngleOpen -> Ok(push(stack, symbol))
+        AngleClose -> pop_expecting(stack, symbol, AngleOpen)
       }
     },
   )
+  |> io.debug
 }
 
-fn pop_expecting(stack: Stack, expected_symbol: Symbol) {
+fn pop_expecting(
+  stack: Stack,
+  found_symbol: Symbol,
+  expected_symbol: Symbol,
+) -> Result(Queue(Symbol), Int) {
   try popped =
     pop(stack)
-    |> result.replace_error("Stack empty")
+    |> result.replace_error(0)
 
-  let #(popposed_symbol, next_stack) = popped
-  case popposed_symbol == expected_symbol {
+  let #(popped_symbol, next_stack) = popped
+
+  case popped_symbol == expected_symbol {
     True -> Ok(next_stack)
-    False -> Error("Unexpected symbol")
+    False ->
+      case found_symbol {
+        ParenClose -> Error(3)
+        SquareClose -> Error(57)
+        CurlyClose -> Error(1197)
+        AngleClose -> Error(25137)
+        _ -> Error(-1)
+      }
   }
 }
 
-fn push(stack: Stack, ele) {
+fn push(stack: Stack, ele: Symbol) {
   queue.push_front(stack, ele)
 }
 
