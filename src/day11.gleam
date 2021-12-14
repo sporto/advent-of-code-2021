@@ -25,23 +25,23 @@ pub fn part1(input) {
 
   let grid = matrix.to_map(input)
 
-  let total = part_one_steps(100, 0, grid)
+  let total = part1_steps(100, 0, grid)
 
   Ok(total)
 }
 
-fn part_one_steps(steps_to_go, flash_count, grid) {
+fn part1_steps(steps_to_go, flash_count, grid) {
   case steps_to_go {
     0 -> flash_count
     _ -> {
-      let #(next, count) = part1_step(grid)
+      let #(next, count) = step(grid)
       // io.debug(count)
-      part_one_steps(steps_to_go - 1, flash_count + count, next)
+      part1_steps(steps_to_go - 1, flash_count + count, next)
     }
   }
 }
 
-pub fn part1_step(population) {
+pub fn step(population) {
   // Increase level of each by 1
   let increased =
     population
@@ -119,7 +119,20 @@ fn surrounding_points(point) {
 pub fn part2(input) {
   try input = read_input(input)
 
-  Ok(0)
+  let grid = matrix.to_map(input)
+
+  let step = part2_steps(1, grid)
+
+  Ok(step)
+}
+
+fn part2_steps(current_step, grid) {
+  // keep running until all flash
+  let #(next, count) = step(grid)
+  case count == map.size(grid) {
+    True -> current_step
+    False -> part2_steps(current_step + 1, next)
+  }
 }
 
 fn print_grid(grid) {
