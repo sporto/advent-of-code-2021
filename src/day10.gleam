@@ -152,3 +152,7 @@ fn pop(stack: Stack) {
 pub fn part1_test() {
   part1("./data/10/test.txt")
 }
+
+pub fn part1_main() {
+  part1("./data/10/input.txt")
+}
