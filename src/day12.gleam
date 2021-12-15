@@ -46,10 +46,21 @@ fn make_map(lines) {
 pub fn part1(input) {
   try graph = read_input(input)
 
-  let paths =
-    find_paths(graph)
-    |> io.debug
+  let paths = find_paths(graph)
 
+  // |> io.debug
+  try from_start =
+    map.get(paths, "start")
+    |> result.replace_error("start not found")
+
+  io.debug(from_start)
+  io.debug(list.length(from_start))
+
+  let to_end =
+    from_start
+    |> list.filter(fn(path) { list.last(path) == Ok("end") })
+
+  // |> io.debug
   Ok(0)
 }
 
