@@ -32,6 +32,18 @@ fn make_graph(lines) {
       add_bi_to_graph(acc, a, b)
     },
   )
+  // From end we cannot go anywhere
+  // |> map.delete("end")
+  // We don't want to go back to start
+  // |> map.map_values(fn(_, v) { remove_start(v) })
+}
+
+fn remove_start(l) {
+  list.filter(l, is_not_start)
+}
+
+fn is_not_start(name) {
+  name != "start"
 }
 
 fn add_bi_to_graph(graph, a, b) {
@@ -58,46 +70,48 @@ pub fn part1(input) {
     read_input(input)
     |> io.debug
 
-  // let paths = find_paths(graph)
-  // // |> io.debug
-  // try from_start =
-  //   map.get(paths, "start")
-  //   |> result.replace_error("start not found")
-  // io.debug(from_start)
-  // io.debug(list.length(from_start))
-  // let to_end =
-  //   from_start
-  //   |> list.filter(fn(path) { list.last(path) == Ok("end") })
-  // |> io.debug
+  walk([], "start", graph)
+  |> io.debug
+
   Ok(0)
 }
 
-fn find_paths(graph) {
-  graph
-  |> map.to_list
-  |> list.reverse
-  |> list.fold(
-    map.new(),
-    fn(paths_found, tuple) {
-      let #(from, _) = tuple
-      let paths = walk(from, graph, paths_found)
-      map.insert(paths_found, from, paths)
-    },
-  )
-}
-
-fn walk(from: String, graph: Graph, paths_found) -> List(List(String)) {
-  case map.get(paths_found, from) {
-    Ok(found) -> found
-    Error(_) ->
-      // io.debug(from)
-      case map.get(graph, from) {
-        Error(Nil) -> [[from]]
-        Ok(tos) ->
-          // io.debug(tos)
-          list.map(tos, walk(_, graph, paths_found))
-          |> list.flatten
-          |> list.map(fn(l) { [from, ..l] })
+// [A c A] is ok
+// [A c A c] is not
+// lower cannot be two times
+fn walk(
+  previous_path: List(String),
+  from: String,
+  graph: Graph,
+) -> Result(List(List(String)), String) {
+  let path = list.append(previous_path, [from])
+  let walked = list.contains(previous_path, from)
+  let is_lower = string.lowercase(from) == from
+  let is_back_to_start = from == "start" && list.length(previous_path) > 0
+  let is_end = from == "end"
+  // Start can only be at the beginning
+  case is_back_to_start {
+    True -> Error("Cannot go back to start")
+    False ->
+      case is_end {
+        True -> Ok([path])
+        False ->
+          case walked && is_lower {
+            True -> Ok([path])
+            False ->
+              // Keep walking
+              case map.get(graph, from) {
+                Error(_) -> Error("Destination not found")
+                Ok(goes_to) -> {
+                  let found =
+                    list.filter_map(goes_to, fn(to) { walk(path, to, graph) })
+                    |> list.flatten
+                    // Only keeps the ones that go to the end
+                    |> list.filter(fn(path) { list.last(path) == Ok("end") })
+                  Ok(found)
+                }
+              }
+          }
       }
   }
 }
