@@ -1,14 +1,15 @@
+import gleam/bool
+import gleam/int
 import gleam/io
 import gleam/list
-import gleam/int
-import gleam/result
-import gleam/string
-import gleam/pair
-import gleam/option.{None, Some}
 import gleam/map.{Map}
+import gleam/option.{None, Some}
+import gleam/pair
+import gleam/result
 import gleam/set.{Set}
-import utils
+import gleam/string
 import matrix
+import utils
 
 type Graph =
   Map(String, List(String))
@@ -70,17 +71,20 @@ pub fn part1(input) {
     read_input(input)
     |> io.debug
 
-  let cant_visit = fn(previous_path, current) {
-    let walked = list.contains(previous_path, current)
-    let is_lower = string.lowercase(current) == current
-    walked && is_lower
-  }
-
   try paths =
-    walk([], "start", graph, cant_visit)
+    walk([], "start", graph, part1_can_visit)
     |> io.debug
 
   Ok(list.length(paths))
+}
+
+fn part1_can_visit(previous_path, current) {
+  case is_lower(current) {
+    False -> True
+    True ->
+      list.contains(previous_path, current)
+      |> bool.negate
+  }
 }
 
 pub fn part2(input) {
@@ -88,17 +92,43 @@ pub fn part2(input) {
     read_input(input)
     |> io.debug
 
-  let cant_visit = fn(previous_path, current) {
-    let walked = list.contains(previous_path, current)
-    let is_lower = string.lowercase(current) == current
-    walked && is_lower
-  }
-
   try paths =
-    walk([], "start", graph, cant_visit)
+    walk([], "start", graph, part2_can_visit)
     |> io.debug
 
   Ok(list.length(paths))
+}
+
+fn part2_can_visit(previous_path, current) {
+  case is_lower(current) {
+    False -> True
+    True -> {
+      let times_walked =
+        previous_path
+        |> list.filter(fn(p) { p == current })
+        |> list.length
+      case times_walked {
+        0 -> True
+        1 ->
+          // Can visit if no other lower is twice
+          max_lower_count(previous_path) < 2
+        _ -> False
+      }
+    }
+  }
+}
+
+fn is_lower(c) {
+  string.lowercase(c) == c
+}
+
+fn max_lower_count(path: List(String)) -> Int {
+  path
+  |> list.filter(is_lower)
+  |> utils.count
+  |> map.values
+  |> list.reduce(int.max)
+  |> result.unwrap(0)
 }
 
 // [A c A] is ok
@@ -108,12 +138,11 @@ fn walk(
   previous_path: List(String),
   from: String,
   graph: Graph,
-  cant_visit: fn(List(String), String) -> Bool,
+  can_visit: fn(List(String), String) -> Bool,
 ) -> Result(List(List(String)), String) {
   let path = list.append(previous_path, [from])
   let is_back_to_start = from == "start" && list.length(previous_path) > 0
   let is_end = from == "end"
-  let cannot_visit = cant_visit(previous_path, from)
 
   // Start can only be at the beginning
   case is_back_to_start {
@@ -122,9 +151,9 @@ fn walk(
       case is_end {
         True -> Ok([path])
         False ->
-          case cannot_visit {
-            True -> Ok([path])
-            False ->
+          case can_visit(previous_path, from) {
+            False -> Ok([path])
+            True ->
               // Keep walking
               case map.get(graph, from) {
                 Error(_) -> Error("Destination not found")
@@ -132,7 +161,7 @@ fn walk(
                   let found =
                     list.filter_map(
                       goes_to,
-                      fn(to) { walk(path, to, graph, cant_visit) },
+                      fn(to) { walk(path, to, graph, can_visit) },
                     )
                     |> list.flatten
                     // Only keeps the ones that go to the end
@@ -163,4 +192,16 @@ pub fn part1_main() {
 
 pub fn part2_test1() {
   part2("./data/12/test1.txt")
+}
+
+pub fn part2_test2() {
+  part2("./data/12/test2.txt")
+}
+
+pub fn part2_test3() {
+  part2("./data/12/test3.txt")
+}
+
+pub fn part2_main() {
+  part2("./data/12/input.txt")
 }

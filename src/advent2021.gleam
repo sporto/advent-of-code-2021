@@ -3,6 +3,6 @@ import gleam/int
 import day12
 
 pub fn main() {
-  day12.part1_test2()
+  day12.part2_main()
   |> io.debug
 }
