@@ -137,18 +137,15 @@ fn part2_steps(current_step, grid) {
 
 fn print_grid(grid) {
   let points = map.keys(grid)
+
   let xs =
     list.map(points, pair.first)
     |> list.unique
+
   let ys =
     list.map(points, pair.second)
     |> list.unique
-  // let maxx =
-  //   list.reduce(xs, int.max)
-  //   |> result.unwrap(0)
-  // let maxy =
-  //   list.reduce(ys, int.max)
-  //   |> result.unwrap(0)
+
   list.map(
     ys,
     fn(y) {

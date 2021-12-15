@@ -20,46 +20,54 @@ fn parse_line(line: String) {
 
 fn read_input(file: String) {
   utils.get_input_lines(file, parse_line)
-  |> result.map(make_map)
+  |> result.map(make_graph)
 }
 
-fn make_map(lines) {
+fn make_graph(lines) {
   list.fold(
     lines,
     map.new(),
     fn(acc, tuple) {
-      let #(from, to) = tuple
-      map.update(
-        acc,
-        from,
-        fn(op) {
-          case op {
-            Some(current) -> [to, ..current]
-            None -> [to]
-          }
-        },
-      )
+      let #(a, b) = tuple
+      add_bi_to_graph(acc, a, b)
+    },
+  )
+}
+
+fn add_bi_to_graph(graph, a, b) {
+  graph
+  |> add_to_graph(a, b)
+  |> add_to_graph(b, a)
+}
+
+fn add_to_graph(graph, from, to) {
+  map.update(
+    graph,
+    from,
+    fn(op) {
+      case op {
+        Some(current) -> [to, ..current]
+        None -> [to]
+      }
     },
   )
 }
 
 pub fn part1(input) {
-  try graph = read_input(input)
+  try graph =
+    read_input(input)
+    |> io.debug
 
-  let paths = find_paths(graph)
-
-  // |> io.debug
-  try from_start =
-    map.get(paths, "start")
-    |> result.replace_error("start not found")
-
-  io.debug(from_start)
-  io.debug(list.length(from_start))
-
-  let to_end =
-    from_start
-    |> list.filter(fn(path) { list.last(path) == Ok("end") })
-
+  // let paths = find_paths(graph)
+  // // |> io.debug
+  // try from_start =
+  //   map.get(paths, "start")
+  //   |> result.replace_error("start not found")
+  // io.debug(from_start)
+  // io.debug(list.length(from_start))
+  // let to_end =
+  //   from_start
+  //   |> list.filter(fn(path) { list.last(path) == Ok("end") })
   // |> io.debug
   Ok(0)
 }
