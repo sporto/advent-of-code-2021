@@ -70,8 +70,32 @@ pub fn part1(input) {
     read_input(input)
     |> io.debug
 
+  let cant_visit = fn(previous_path, current) {
+    let walked = list.contains(previous_path, current)
+    let is_lower = string.lowercase(current) == current
+    walked && is_lower
+  }
+
   try paths =
-    walk([], "start", graph)
+    walk([], "start", graph, cant_visit)
+    |> io.debug
+
+  Ok(list.length(paths))
+}
+
+pub fn part2(input) {
+  try graph =
+    read_input(input)
+    |> io.debug
+
+  let cant_visit = fn(previous_path, current) {
+    let walked = list.contains(previous_path, current)
+    let is_lower = string.lowercase(current) == current
+    walked && is_lower
+  }
+
+  try paths =
+    walk([], "start", graph, cant_visit)
     |> io.debug
 
   Ok(list.length(paths))
@@ -84,12 +108,13 @@ fn walk(
   previous_path: List(String),
   from: String,
   graph: Graph,
+  cant_visit: fn(List(String), String) -> Bool,
 ) -> Result(List(List(String)), String) {
   let path = list.append(previous_path, [from])
-  let walked = list.contains(previous_path, from)
-  let is_lower = string.lowercase(from) == from
   let is_back_to_start = from == "start" && list.length(previous_path) > 0
   let is_end = from == "end"
+  let cannot_visit = cant_visit(previous_path, from)
+
   // Start can only be at the beginning
   case is_back_to_start {
     True -> Error("Cannot go back to start")
@@ -97,7 +122,7 @@ fn walk(
       case is_end {
         True -> Ok([path])
         False ->
-          case walked && is_lower {
+          case cannot_visit {
             True -> Ok([path])
             False ->
               // Keep walking
@@ -105,7 +130,10 @@ fn walk(
                 Error(_) -> Error("Destination not found")
                 Ok(goes_to) -> {
                   let found =
-                    list.filter_map(goes_to, fn(to) { walk(path, to, graph) })
+                    list.filter_map(
+                      goes_to,
+                      fn(to) { walk(path, to, graph, cant_visit) },
+                    )
                     |> list.flatten
                     // Only keeps the ones that go to the end
                     |> list.filter(fn(path) { list.last(path) == Ok("end") })
@@ -117,8 +145,8 @@ fn walk(
   }
 }
 
-pub fn part1_test() {
-  part1("./data/12/test.txt")
+pub fn part1_test1() {
+  part1("./data/12/test1.txt")
 }
 
 pub fn part1_test2() {
@@ -131,4 +159,8 @@ pub fn part1_test3() {
 
 pub fn part1_main() {
   part1("./data/12/input.txt")
+}
+
+pub fn part2_test1() {
+  part2("./data/12/test1.txt")
 }
