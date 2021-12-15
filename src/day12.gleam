@@ -70,10 +70,11 @@ pub fn part1(input) {
     read_input(input)
     |> io.debug
 
-  walk([], "start", graph)
-  |> io.debug
+  try paths =
+    walk([], "start", graph)
+    |> io.debug
 
-  Ok(0)
+  Ok(list.length(paths))
 }
 
 // [A c A] is ok
@@ -118,6 +119,14 @@ fn walk(
 
 pub fn part1_test() {
   part1("./data/12/test.txt")
+}
+
+pub fn part1_test2() {
+  part1("./data/12/test2.txt")
+}
+
+pub fn part1_test3() {
+  part1("./data/12/test3.txt")
 }
 
 pub fn part1_main() {
