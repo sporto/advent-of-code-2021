@@ -66,6 +66,21 @@ fn part1(input) {
   Ok(max - min)
 }
 
+fn part2(input) {
+  try #(template, rules) = read_input(input)
+
+  let polymer = run(template, rules, 40)
+
+  let counts = utils.count(polymer)
+
+  let vals = map.values(counts)
+
+  let min = utils.list_min(vals, 0)
+  let max = utils.list_max(vals, 0)
+
+  Ok(max - min)
+}
+
 fn run(template, rules, steps_to_go) {
   case steps_to_go {
     0 -> template
@@ -74,46 +89,34 @@ fn run(template, rules, steps_to_go) {
 }
 
 fn insert(template, rules) {
-  template
-  |> list.window_by_2
-  |> list.map(insert_in_pair(_, rules))
-  |> result.all
-  |> result.map(compress)
-  |> result.unwrap([])
+  insert_([], template, rules)
 }
 
-fn insert_in_pair(tuple, rules) {
-  let #(a, b) = tuple
-
-  map.get(rules, tuple)
-  |> result.map(fn(insertion) { #(a, insertion, b) })
+fn insert_(collected, remainder, rules) {
+  case remainder {
+    [a, b, ..rest] -> {
+      let char_to_insert =
+        map.get(rules, #(a, b))
+        |> result.unwrap("")
+      insert_(list.append(collected, [a, char_to_insert]), [b, ..rest], rules)
+    }
+    [b] -> list.append(collected, [b])
+    _ -> collected
+  }
 }
 
-fn compress(tuples) {
-  let head =
-    list.take(tuples, 1)
-    |> list.map(fn(tuple) {
-      let #(a, b, c) = tuple
-      [a, b, c]
-    })
-    |> list.flatten
-
-  let tail =
-    tuples
-    |> list.drop(1)
-    |> list.map(fn(tuple) {
-      let #(a, b, c) = tuple
-      [b, c]
-    })
-    |> list.flatten
-
-  list.append(head, tail)
-}
-
-pub fn part1_test1() {
+pub fn part1_test() {
   part1("./data/14/test1.txt")
 }
 
 pub fn part1_main() {
   part1("./data/14/input.txt")
+}
+
+pub fn part2_test() {
+  part2("./data/14/test1.txt")
+}
+
+pub fn part2_main() {
+  part2("./data/14/input.txt")
 }
