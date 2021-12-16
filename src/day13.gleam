@@ -89,6 +89,17 @@ fn part1(input) {
   Ok(count)
 }
 
+fn part2(input) {
+  try #(matrix, instructions) = read_input(input)
+
+  // print_matrix(matrix)
+  let folded =
+    follow(instructions, matrix)
+    |> print_matrix
+
+  Ok(0)
+}
+
 fn follow(instructions, matrix) {
   case instructions {
     [] -> matrix
@@ -185,4 +196,8 @@ pub fn part1_test1() {
 
 pub fn part1_main() {
   part1("./data/13/input.txt")
+}
+
+pub fn part2_main() {
+  part2("./data/13/input.txt")
 }
