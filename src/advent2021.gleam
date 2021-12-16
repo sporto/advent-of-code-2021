@@ -4,6 +4,6 @@ import day14
 
 pub fn main() {
   // 1588
-  day14.part1_main()
+  day14.part2_test()
   |> io.debug
 }
