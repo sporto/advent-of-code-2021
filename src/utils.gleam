@@ -145,6 +145,12 @@ pub fn list_min(list: List(Int), fallback: Int) -> Int {
   |> result.unwrap(fallback)
 }
 
+pub fn list_max(list: List(Int), fallback: Int) -> Int {
+  list
+  |> list.reduce(int.max)
+  |> result.unwrap(fallback)
+}
+
 // SETS
 // Find the elements that are in one but not in two
 pub fn set_diff(one: Set(a), two: Set(a)) -> Set(a) {
