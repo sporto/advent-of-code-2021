@@ -6,13 +6,6 @@ import gleam/string
 import gleam/map
 import utils
 
-type Pol {
-  B
-  C
-  H
-  N
-}
-
 fn read_input(file: String) {
   try content =
     utils.read_file(file)
@@ -20,7 +13,7 @@ fn read_input(file: String) {
   try #(template_block, rules_block) =
     string.split_once(content, "\n\n")
     |> result.replace_error("Couldn't split")
-  try template = parse_template(template_block)
+  let template = parse_template(template_block)
   try rules = parse_rules(rules_block)
   Ok(#(template, rules))
 }
@@ -28,18 +21,6 @@ fn read_input(file: String) {
 fn parse_template(input) {
   input
   |> string.to_graphemes
-  |> list.map(parse_char)
-  |> result.all
-}
-
-fn parse_char(c) {
-  case c {
-    "B" -> Ok(B)
-    "C" -> Ok(C)
-    "H" -> Ok(H)
-    "N" -> Ok(N)
-    _ -> Error(c)
-  }
 }
 
 fn parse_rules(input) {
@@ -59,19 +40,11 @@ fn parse_rule(input) {
 
   try left_chars = parse_rule_left(left)
 
-  try right_char = parse_char(right)
-
-  Ok(#(left_chars, right_char))
+  Ok(#(left_chars, right))
 }
 
 fn parse_rule_left(input) {
-  try left_chars =
-    input
-    |> string.to_graphemes
-    |> list.map(parse_char)
-    |> result.all
-
-  case left_chars {
+  case string.to_graphemes(input) {
     [a, b] -> Ok(#(a, b))
     _ -> Error("Invalid")
   }
@@ -139,4 +112,8 @@ fn compress(tuples) {
 
 pub fn part1_test1() {
   part1("./data/14/test1.txt")
+}
+
+pub fn part1_main() {
+  part1("./data/14/input.txt")
 }
