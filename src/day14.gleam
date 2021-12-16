@@ -90,6 +90,7 @@ fn run(template, rules, steps_to_go) {
 
 fn insert(template, rules) {
   insert_([], template, rules)
+  |> list.reverse
 }
 
 fn insert_(collected, remainder, rules) {
@@ -98,9 +99,9 @@ fn insert_(collected, remainder, rules) {
       let char_to_insert =
         map.get(rules, #(a, b))
         |> result.unwrap("")
-      insert_(list.append(collected, [a, char_to_insert]), [b, ..rest], rules)
+      insert_([char_to_insert, a, ..collected], [b, ..rest], rules)
     }
-    [b] -> list.append(collected, [b])
+    [b] -> [b, ..collected]
     _ -> collected
   }
 }
