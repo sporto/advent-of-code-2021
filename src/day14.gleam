@@ -3,8 +3,22 @@ import gleam/io
 import gleam/list
 import gleam/result
 import gleam/string
-import gleam/map
+import gleam/pair
+import gleam/option.{None, Some}
+import gleam/map.{Map}
 import utils
+
+type Pair =
+  #(String, String)
+
+type PairMap =
+  Map(Pair, Int)
+
+type Rule =
+  #(Pair, List(Pair))
+
+type RuleMap =
+  Map(Pair, List(Pair))
 
 fn read_input(file: String) {
   try content =
@@ -23,87 +37,176 @@ fn parse_template(input) {
   |> string.to_graphemes
 }
 
-fn parse_rules(input) {
+fn parse_rules(input) -> Result(List(Rule), String) {
   try rules =
     input
     |> utils.split_lines
     |> list.map(parse_rule)
     |> result.all
 
-  Ok(map.from_list(rules))
+  Ok(rules)
 }
 
-fn parse_rule(input) {
+fn parse_rule(input) -> Result(Rule, String) {
   try #(left, right) =
     string.split_once(input, " -> ")
     |> result.replace_error("Couldn't split")
 
-  try left_chars = parse_rule_left(left)
+  try left_pair = parse_left_pair(left)
+  let right_pairs = [
+    #(pair.first(left_pair), right),
+    #(right, pair.second(left_pair)),
+  ]
 
-  Ok(#(left_chars, right))
+  // let right_chars = intersperse_char(left, right)
+  Ok(#(left_pair, right_pairs))
 }
 
-fn parse_rule_left(input) {
+fn parse_left_pair(input: String) -> Result(Pair, String) {
   case string.to_graphemes(input) {
     [a, b] -> Ok(#(a, b))
-    _ -> Error("Invalid")
+    _ -> Error("Couldn't get pair")
   }
 }
 
 fn part1(input) {
-  try #(template, rules) = read_input(input)
-
-  let polymer = run(template, rules, 10)
-
-  let counts = utils.count(polymer)
-
-  // |> io.debug
-  let vals = map.values(counts)
-
-  let min = utils.list_min(vals, 0)
-  let max = utils.list_max(vals, 0)
-
-  Ok(max - min)
+  run(input, 10)
 }
 
 fn part2(input) {
+  // 14 5s
+  // 15 8s
+  // 16 23s
+  run(input, 14)
+}
+
+fn run(input, steps) {
   try #(template, rules) = read_input(input)
 
-  let polymer = run(template, rules, 40)
+  let pairs_map = make_pairs_map(template)
 
-  let counts = utils.count(polymer)
+  let rules_map = map.from_list(rules)
 
-  let vals = map.values(counts)
+  try first_char =
+    template
+    |> list.first
+    |> result.replace_error("Couldn't get first")
+
+  let final_pair_map = run_steps(pairs_map, rules_map, steps)
+
+  // |> io.debug
+  let element_counts = count_elements(first_char, final_pair_map)
+
+  // |> io.debug
+  element_counts
+  |> map.values
+  |> int.sum
+
+  // |> io.debug
+  let vals = map.values(element_counts)
 
   let min = utils.list_min(vals, 0)
+
   let max = utils.list_max(vals, 0)
 
   Ok(max - min)
 }
 
-fn run(template, rules, steps_to_go) {
+fn count_elements(first_char: String, pairs_map: PairMap) {
+  // Pairs share the element, we cannot simply count like this
+  map.fold(
+    pairs_map,
+    map.new(),
+    fn(acc, tuple, count) {
+      let #(a, b) = tuple
+
+      // Do not count the one on the left as this will be the right of another pair
+      acc
+      |> utils.update_map_count(b, count)
+    },
+  )
+  |> utils.update_map_count(first_char, 1)
+}
+
+fn make_pairs_map(template) -> Map(Pair, Int) {
+  template
+  |> list.window_by_2
+  |> utils.count
+}
+
+fn run_steps(pairs_map: PairMap, rules: RuleMap, steps_to_go: Int) {
   case steps_to_go {
-    0 -> template
-    _ -> run(insert(template, rules), rules, steps_to_go - 1)
-  }
-}
-
-fn insert(template, rules) {
-  insert_([], template, rules)
-  |> list.reverse
-}
-
-fn insert_(collected, remainder, rules) {
-  case remainder {
-    [a, b, ..rest] -> {
-      let char_to_insert =
-        map.get(rules, #(a, b))
-        |> result.unwrap("")
-      insert_([char_to_insert, a, ..collected], [b, ..rest], rules)
+    0 -> pairs_map
+    _ -> {
+      let next_pair_map = run_step(pairs_map, rules)
+      run_steps(next_pair_map, rules, steps_to_go - 1)
     }
-    [b] -> [b, ..collected]
-    _ -> collected
   }
+}
+
+fn run_step(pairs_map: PairMap, rules: RuleMap) {
+  run_step_v1(pairs_map, rules)
+}
+
+// Fold over a map
+fn run_step_v1(pairs_map: PairMap, rules: RuleMap) -> PairMap {
+  map.fold(
+    pairs_map,
+    map.new(),
+    fn(acc, pair, count) {
+      let pairs =
+        map.get(rules, pair)
+        |> result.unwrap([])
+      // we need to insert new pairs by the # of count
+      insert_pairs(acc, pairs, count)
+    },
+  )
+}
+
+// Fold over a list
+fn run_step_v2(pairs_map: PairMap, rules: RuleMap) -> PairMap {
+  let pairs = map.to_list(pairs_map)
+  list.fold(
+    pairs,
+    map.new(),
+    fn(acc, pair_and_count) {
+      let #(pair, count) = pair_and_count
+      let pairs =
+        map.get(rules, pair)
+        |> result.unwrap([])
+      // we need to insert new pairs by the # of count
+      insert_pairs(acc, pairs, count)
+    },
+  )
+}
+
+// Using recursion
+fn run_step_v3(pairs_map: PairMap, rules: RuleMap) -> PairMap {
+  let pairs = map.to_list(pairs_map)
+  run_step_v3_(pairs, rules, map.new())
+}
+
+fn run_step_v3_(pairs, rules: RuleMap, acc) -> PairMap {
+  case pairs {
+    [] -> acc
+    [pair_and_count, ..rest] -> {
+      let #(pair, count) = pair_and_count
+      let pairs =
+        map.get(rules, pair)
+        |> result.unwrap([])
+      // we need to insert new pairs by the # of count
+      let next_acc = insert_pairs(acc, pairs, count)
+      run_step_v3_(rest, rules, next_acc)
+    }
+  }
+}
+
+fn insert_pairs(pair_map: PairMap, pairs: List(Pair), how_many_times: Int) {
+  list.fold(
+    pairs,
+    pair_map,
+    fn(acc, pair) { utils.update_map_count(acc, pair, how_many_times) },
+  )
 }
 
 pub fn part1_test() {
