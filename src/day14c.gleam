@@ -70,38 +70,46 @@ fn parse_left_pair(input: String) -> Result(Pair, String) {
 }
 
 fn part1(input) {
-  run(input, 3)
+  run(input, 10)
 }
 
 fn part2(input) {
-  run(input, 10)
+  run(input, 20)
 }
 
 fn run(input, steps) {
   try #(template, rules) = read_input(input)
+
   let pairs_map = make_pairs_map(template)
+
   let rules_map = map.from_list(rules)
 
-  let final_pair_map =
-    run_steps(pairs_map, rules_map, steps)
-    |> io.debug
+  try first_char =
+    template
+    |> list.first
+    |> result.replace_error("Couldn't get first")
 
-  let element_counts =
-    count_elements(final_pair_map)
-    |> io.debug
+  let final_pair_map = run_steps(pairs_map, rules_map, steps)
 
-  // element_counts
-  // |> map.values
-  // |> int.sum
+  // |> io.debug
+  let element_counts = count_elements(first_char, final_pair_map)
+
+  // |> io.debug
+  element_counts
+  |> map.values
+  |> int.sum
+
   // |> io.debug
   let vals = map.values(element_counts)
+
   let min = utils.list_min(vals, 0)
+
   let max = utils.list_max(vals, 0)
 
   Ok(max - min)
 }
 
-fn count_elements(pairs_map) {
+fn count_elements(first_char: String, pairs_map: PairMap) {
   // Pairs share the element, we cannot simply count like this
   map.fold(
     pairs_map,
@@ -109,12 +117,12 @@ fn count_elements(pairs_map) {
     fn(acc, tuple, count) {
       let #(a, b) = tuple
 
-      // Do not count the one on the left, unless is the leftmost pair
+      // Do not count the one on the left as this will be the right of another pair
       acc
-      |> utils.update_map_count(a, count)
       |> utils.update_map_count(b, count)
     },
   )
+  |> utils.update_map_count(first_char, 1)
 }
 
 fn make_pairs_map(template) -> Map(Pair, Int) {
@@ -128,6 +136,13 @@ fn run_steps(pairs_map: PairMap, rules: RuleMap, steps_to_go: Int) {
     0 -> pairs_map
     _ -> {
       let next_pair_map = run_step(pairs_map, rules)
+      // |> io.debug
+      // io.debug("pairs count")
+      // io.debug(
+      //   next_pair_map
+      //   |> map.values
+      //   |> int.sum,
+      // )
       run_steps(next_pair_map, rules, steps_to_go - 1)
     }
   }
@@ -141,12 +156,20 @@ fn run_step(pairs_map: PairMap, rules: RuleMap) -> PairMap {
       let pairs =
         map.get(rules, pair)
         |> result.unwrap([])
-      insert_pairs(acc, pairs)
+      // we need to insert new pairs by the # of count
+      insert_pairs(acc, pairs, count)
     },
   )
 }
 
-fn insert_pairs(pair_map: PairMap, pairs: List(Pair)) {
+fn insert_pairs(pair_map: PairMap, pairs: List(Pair), how_many_times: Int) {
+  pairs
+  |> list.repeat(how_many_times)
+  |> list.flatten
+  |> insert_pairs_once(pair_map, _)
+}
+
+fn insert_pairs_once(pair_map: PairMap, pairs: List(Pair)) {
   list.fold(
     pairs,
     pair_map,
