@@ -138,6 +138,19 @@ pub fn count(l: List(a)) -> Map(a, Int) {
   )
 }
 
+pub fn update_map_count(the_map: Map(a, Int), key: a, by: Int) -> Map(a, Int) {
+  map.update(
+    the_map,
+    key,
+    fn(op) {
+      case op {
+        None -> by
+        Some(count) -> count + by
+      }
+    },
+  )
+}
+
 // LIST
 pub fn list_min(list: List(Int), fallback: Int) -> Int {
   list
