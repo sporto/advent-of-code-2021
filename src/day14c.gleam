@@ -74,7 +74,10 @@ fn part1(input) {
 }
 
 fn part2(input) {
-  run(input, 20)
+  // 14 5s
+  // 15 8s
+  // 16 23s
+  run(input, 14)
 }
 
 fn run(input, steps) {
@@ -136,13 +139,6 @@ fn run_steps(pairs_map: PairMap, rules: RuleMap, steps_to_go: Int) {
     0 -> pairs_map
     _ -> {
       let next_pair_map = run_step(pairs_map, rules)
-      // |> io.debug
-      // io.debug("pairs count")
-      // io.debug(
-      //   next_pair_map
-      //   |> map.values
-      //   |> int.sum,
-      // )
       run_steps(next_pair_map, rules, steps_to_go - 1)
     }
   }
