@@ -58,7 +58,7 @@ fn part1(input) {
 fn part2(input) {
   try #(template, rules) = read_input(input)
 
-  let polymer = run_rules(template, rules, 40)
+  let polymer = run_rules(template, rules, 15)
 
   let score = get_score(polymer)
 
