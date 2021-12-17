@@ -144,7 +144,12 @@ fn run_steps(pairs_map: PairMap, rules: RuleMap, steps_to_go: Int) {
   }
 }
 
-fn run_step(pairs_map: PairMap, rules: RuleMap) -> PairMap {
+fn run_step(pairs_map: PairMap, rules: RuleMap) {
+  run_step_v1(pairs_map, rules)
+}
+
+// Fold over a map
+fn run_step_v1(pairs_map: PairMap, rules: RuleMap) -> PairMap {
   map.fold(
     pairs_map,
     map.new(),
@@ -156,6 +161,44 @@ fn run_step(pairs_map: PairMap, rules: RuleMap) -> PairMap {
       insert_pairs(acc, pairs, count)
     },
   )
+}
+
+// Fold over a list
+fn run_step_v2(pairs_map: PairMap, rules: RuleMap) -> PairMap {
+  let pairs = map.to_list(pairs_map)
+  list.fold(
+    pairs,
+    map.new(),
+    fn(acc, pair_and_count) {
+      let #(pair, count) = pair_and_count
+      let pairs =
+        map.get(rules, pair)
+        |> result.unwrap([])
+      // we need to insert new pairs by the # of count
+      insert_pairs(acc, pairs, count)
+    },
+  )
+}
+
+// Using recursion
+fn run_step_v3(pairs_map: PairMap, rules: RuleMap) -> PairMap {
+  let pairs = map.to_list(pairs_map)
+  run_step_v3_(pairs, rules, map.new())
+}
+
+fn run_step_v3_(pairs, rules: RuleMap, acc) -> PairMap {
+  case pairs {
+    [] -> acc
+    [pair_and_count, ..rest] -> {
+      let #(pair, count) = pair_and_count
+      let pairs =
+        map.get(rules, pair)
+        |> result.unwrap([])
+      // we need to insert new pairs by the # of count
+      let next_acc = insert_pairs(acc, pairs, count)
+      run_step_v3_(rest, rules, next_acc)
+    }
+  }
 }
 
 fn insert_pairs(pair_map: PairMap, pairs: List(Pair), how_many_times: Int) {
