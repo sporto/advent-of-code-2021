@@ -10,6 +10,7 @@ import gleam/bool
 import gleam/option.{None, Option, Some}
 import gleam/map.{Map}
 import matrix
+import grid
 
 type Point =
   #(Int, Int)
@@ -31,7 +32,7 @@ fn read_input(file: String) {
 
 pub fn part1(input) {
   try input = read_input(input)
-  let points_map = matrix.to_map(input)
+  let points_map = grid.from_matrix(input)
 
   let risk_levels =
     map.map_values(
@@ -58,7 +59,7 @@ pub fn part1(input) {
 
 pub fn part2(input) {
   try input = read_input(input)
-  let points_map = matrix.to_map(input)
+  let points_map = grid.from_matrix(input)
   // Find the lowest points
   let lowest =
     map.filter(

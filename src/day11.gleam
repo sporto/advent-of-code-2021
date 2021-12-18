@@ -7,6 +7,7 @@ import gleam/pair
 import gleam/map
 import utils
 import matrix
+import grid
 
 fn parse_line(line: String) {
   line
@@ -23,7 +24,7 @@ fn read_input(file: String) {
 pub fn part1(input) {
   try input = read_input(input)
 
-  let grid = matrix.to_map(input)
+  let grid = grid.from_matrix(input)
 
   let total = part1_steps(100, 0, grid)
 
@@ -119,7 +120,7 @@ fn surrounding_points(point) {
 pub fn part2(input) {
   try input = read_input(input)
 
-  let grid = matrix.to_map(input)
+  let grid = grid.from_matrix(input)
 
   let step = part2_steps(1, grid)
 
