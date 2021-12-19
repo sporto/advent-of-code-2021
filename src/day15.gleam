@@ -38,20 +38,83 @@ fn get_total_cost_result(point_value: PointValue) -> Result(Int, String) {
 
 pub fn part1(input) {
   try parsed_input = read_input(input)
-  run(parsed_input)
+
+  parsed_input
+  |> grid.from_matrix
+  |> run
 }
 
-fn run(input) {
-  let points_grid =
-    input
-    |> grid.from_matrix
-    |> map.map_values(fn(point, entry_cost) {
-      case point == #(0, 0) {
-        True -> PointValue(entry_cost, Some(0))
-        False -> PointValue(entry_cost, None)
-      }
-    })
+pub fn part2(input) {
+  try parsed_input = read_input(input)
 
+  parsed_input
+  |> grid.from_matrix
+  |> expand_grid
+  |> print_grid_size
+  |> run
+}
+
+fn print_grid_size(g) {
+  g
+  |> map.size
+  |> io.debug
+  g
+}
+
+fn expand_grid(points_grid) {
+  // increase down
+  // then right
+  let factors = [0, 1, 2, 3, 4]
+
+  let width = grid.get_max_x(points_grid) + 1
+  let height = grid.get_max_y(points_grid) + 1
+
+  let wrap = fn(n) {
+    case n > 9 {
+      True -> n - 9
+      False -> n
+    }
+  }
+
+  let add_point = fn(acc, point, value, factor, down) {
+    let #(x, y) = point
+    let next_value =
+      value + factor
+      |> wrap
+
+    let next_point = case down {
+      True -> #(x, y + factor * height)
+      False -> #(x + factor * width, y)
+    }
+    map.insert(acc, next_point, next_value)
+  }
+
+  points_grid
+  // |> print_grid_size
+  |> map.fold(
+    map.new(),
+    fn(acc, point, value) {
+      list.fold(
+        factors,
+        acc,
+        fn(acc2, factor) { add_point(acc2, point, value, factor, True) },
+      )
+    },
+  )
+  // |> print_grid_size
+  |> map.fold(
+    map.new(),
+    fn(acc, point, value) {
+      list.fold(
+        factors,
+        acc,
+        fn(acc2, factor) { add_point(acc2, point, value, factor, False) },
+      )
+    },
+  )
+}
+
+fn run(points_grid) {
   let unvisited =
     points_grid
     |> map.keys
@@ -59,7 +122,14 @@ fn run(input) {
 
   let end_point = grid.get_bottom_right(points_grid)
 
-  loop(points_grid, unvisited, end_point)
+  points_grid
+  |> map.map_values(fn(point, entry_cost) {
+    case point == #(0, 0) {
+      True -> PointValue(entry_cost, Some(0))
+      False -> PointValue(entry_cost, None)
+    }
+  })
+  |> loop(unvisited, end_point)
 }
 
 fn loop(points_grid: Grid(PointValue), unvisited: Set(Point), end_point: Point) {
@@ -160,4 +230,8 @@ pub fn part1_test() {
 
 pub fn part1_main() {
   part1("./data/15/input.txt")
+}
+
+pub fn part2_test() {
+  part2("./data/15/test1.txt")
 }
