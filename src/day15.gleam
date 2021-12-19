@@ -11,12 +11,6 @@ import utils
 import matrix
 import grid.{Grid, Point}
 
-// type PointAndScore =
-//   #(Point, Int)
-// type Path {
-//   PathInProgress(List(PointAndScore))
-//   PathInDone(List(PointAndScore))
-// }
 fn parse_line(line: String) -> Result(List(Int), String) {
   line
   |> string.to_graphemes
@@ -63,35 +57,20 @@ fn run(input) {
     |> map.keys
     |> set.from_list
 
-  let first_point = #(0, 0)
   let end_point = grid.get_bottom_right(points_grid)
 
   loop(points_grid, unvisited, end_point)
 }
 
 fn loop(points_grid: Grid(PointValue), unvisited: Set(Point), end_point: Point) {
-  // Select the unvisited node that is marked with the smallest tentative distance, set it as the new current node, and go back to step 3.
+  // Select the unvisited node that is marked with the smallest tentative distance, set it as the new current node.
   // Find nodes unvisited and marked
-  let considered_nodes =
-    unvisited
-    |> set.to_list
-    |> list.filter_map(fn(point: Point) {
-      get_point_total_cost(point, points_grid)
-      |> result.map(fn(total_cost) { #(point, total_cost) })
-    })
-    |> list.sort(fn(a, b) { int.compare(pair.second(a), pair.second(b)) })
-    |> list.map(pair.first)
-
-  let maybe_next_node =
-    list.first(considered_nodes)
-    |> result.replace_error("Could not find next node")
+  let maybe_next_node = find_next_node_to_visit(unvisited, points_grid)
 
   case maybe_next_node {
     Ok(next_node) -> {
       try #(next_points_grid, next_unvisited) =
         visit(next_node, points_grid, unvisited)
-      // io.debug(next_unvisited)
-      // Ok(next_points_grid)
       loop(next_points_grid, next_unvisited, end_point)
     }
     Error(_) ->
@@ -99,6 +78,19 @@ fn loop(points_grid: Grid(PointValue), unvisited: Set(Point), end_point: Point) 
       |> result.replace_error("Could not find end point")
       |> result.then(get_total_cost_result)
   }
+}
+
+fn find_next_node_to_visit(unvisited: Set(Point), points_grid) {
+  unvisited
+  |> set.to_list
+  |> list.filter_map(fn(point: Point) {
+    get_point_total_cost(point, points_grid)
+    |> result.map(fn(total_cost) { #(point, total_cost) })
+  })
+  |> list.sort(fn(a, b) { int.compare(pair.second(a), pair.second(b)) })
+  |> list.map(pair.first)
+  |> list.first
+  |> result.replace_error("Could not find next node")
 }
 
 fn visit(
