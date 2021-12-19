@@ -1,6 +1,8 @@
 import matrix.{Matrix}
 import gleam/map.{Map}
 import gleam/list
+import gleam/pair
+import utils
 
 pub type Point =
   #(Int, Int)
@@ -36,7 +38,7 @@ fn straight_surrounding_points(point: Point) -> List(Point) {
   [#(x - 1, y), #(x, y + 1), #(x + 1, y), #(x, y - 1)]
 }
 
-fn straight_points_around(grid: Grid(a), point: Point) -> List(#(Point, a)) {
+pub fn straight_points_around(grid: Grid(a), point: Point) -> List(#(Point, a)) {
   straight_surrounding_points(point)
   |> list.filter_map(fn(p: Point) {
     case map.get(grid, p) {
@@ -44,4 +46,24 @@ fn straight_points_around(grid: Grid(a), point: Point) -> List(#(Point, a)) {
       Error(_) -> Error(Nil)
     }
   })
+}
+
+pub fn get_max_x(grid: Grid(a)) {
+  grid
+  |> map.keys
+  |> list.map(pair.first)
+  |> utils.list_max(0)
+}
+
+pub fn get_max_y(grid: Grid(a)) {
+  grid
+  |> map.keys
+  |> list.map(pair.second)
+  |> utils.list_max(0)
+}
+
+pub fn get_bottom_right(grid: Grid(a)) -> Point {
+  let x = get_max_x(grid)
+  let y = get_max_y(grid)
+  #(x, y)
 }
