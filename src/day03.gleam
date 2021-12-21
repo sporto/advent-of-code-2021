@@ -4,6 +4,7 @@ import gleam/result
 import gleam/string
 import gleam/io
 import gleam/bool
+import binary
 import utils
 
 type Matrix =
@@ -68,8 +69,8 @@ pub fn part1(file: String) {
   try input = read_input(file)
   let gamma_rate = get_most_common_bits(input)
   let epsilon_rate = negate_bits(gamma_rate)
-  let gamma = utils.binary_to_int(gamma_rate)
-  let epsilon = utils.binary_to_int(epsilon_rate)
+  let gamma = binary.binary_to_int(gamma_rate)
+  let epsilon = binary.binary_to_int(epsilon_rate)
 
   Ok(gamma * epsilon)
 }
@@ -116,7 +117,7 @@ pub fn part2(file: String) {
   //   co2_scrubber
   //   |> utils.binary_to_string,
   // )
-  let oxygen_int = utils.binary_to_int(oxygen)
-  let co2_scrubber_int = utils.binary_to_int(co2_scrubber)
+  let oxygen_int = binary.binary_to_int(oxygen)
+  let co2_scrubber_int = binary.binary_to_int(co2_scrubber)
   Ok(oxygen_int * co2_scrubber_int)
 }
