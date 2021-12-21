@@ -51,6 +51,7 @@ pub fn binary_to_int(bin: List(Bool)) -> Int {
 }
 
 /// Convert a string "1101" to int
+/// Invalid chars are discarded
 pub fn from_binary_string(bin: String) -> Int {
   bin
   |> string.to_graphemes
@@ -63,4 +64,12 @@ pub fn from_binary_string(bin: String) -> Int {
     }
   })
   |> binary_to_int
+}
+
+pub fn sized(bin: List(Bool), size: Int) -> List(Bool) {
+  bin
+  |> list.reverse
+  |> list.append(list.repeat(False, times: size))
+  |> list.take(size)
+  |> list.reverse
 }
