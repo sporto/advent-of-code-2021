@@ -5,6 +5,10 @@ import gleam/io
 import gleam/bit_string
 import binary
 
+pub type Packet {
+  Packet(version: Int)
+}
+
 fn parse_hex_char(c: String) -> Result(List(Bool), Nil) {
   case c {
     "0" -> Ok(binary.to_binary_sized(0, 4))
@@ -35,6 +39,20 @@ pub fn hex_to_binary(hex: String) -> Result(List(Bool), Nil) {
   // |> result.then(list.first)
   // |> io.debug
   |> result.map(binary.concat)
+}
+
+pub fn parse_packet(hex: String) -> Result(Packet, String) {
+  try bin =
+    hex_to_binary(hex)
+    |> result.replace_error("Couldn't parse hex")
+
+  case bin {
+    [v1, v2, v3, .._] -> {
+      let version = binary.binary_to_int([v1, v2, v3])
+      Ok(Packet(version: version))
+    }
+    _ -> Error("Invalid Packet")
+  }
 }
 
 pub fn part1_test() {
