@@ -46,7 +46,8 @@ pub type PacketPayload {
   Operator
 }
 
-pub fn parse_packet(hex: String) -> Result(Packet, String) {
+// Return the packet and unused bin
+pub fn parse_packet(hex: String) -> Result(#(Packet, List(Bool)), String) {
   try bin =
     hex_to_binary(hex)
     |> result.replace_error("Couldn't parse hex")
@@ -55,39 +56,64 @@ pub fn parse_packet(hex: String) -> Result(Packet, String) {
     [v1, v2, v3, t1, t2, t3, ..rest] -> {
       let version = binary.binary_to_int([v1, v2, v3])
       let type_id = binary.binary_to_int([t1, t2, t3])
-      let payload = case type_id == 4 {
+      let #(payload, unused) = case type_id == 4 {
         True -> {
-          let decimal = get_decimal(rest)
-          DecimalValue(decimal)
+          let #(decimal, unused) = get_decimal(rest)
+          #(DecimalValue(decimal), unused)
         }
-        False -> Operator
+        False -> {
+          let operator = get_operator(rest)
+          #(Operator, [])
+        }
       }
-      Ok(Packet(version: version, payload: payload))
+      Ok(#(Packet(version: version, payload: payload), unused))
     }
     _ -> Error("Invalid Packet")
   }
 }
 
 fn get_decimal(bin: List(Bool)) {
-  bin
-  |> list.sized_chunk(5)
-  |> list.fold_until(
-    [],
-    fn(acc: List(Bool), chunk) {
-      case chunk {
-        [a, b, c, d, e] -> {
-          let n = [b, c, d, e]
-          let next_acc = list.append(acc, n)
-          case a == True {
-            True -> list.Continue(next_acc)
-            False -> list.Stop(next_acc)
+  let n =
+    bin
+    |> list.sized_chunk(5)
+    |> list.fold_until(
+      [],
+      fn(acc: List(Bool), chunk) {
+        case chunk {
+          [a, b, c, d, e] -> {
+            let n = [b, c, d, e]
+            let next_acc = list.append(acc, n)
+            case a == True {
+              True -> list.Continue(next_acc)
+              False -> list.Stop(next_acc)
+            }
           }
+          _ -> list.Stop(acc)
         }
-        _ -> list.Stop(acc)
+      },
+    )
+    |> binary.binary_to_int
+  // TODO return the unused
+  #(n, [])
+}
+
+fn get_operator(bin: List(Bool)) {
+  case bin {
+    [id, ..rest] ->
+      case id {
+        False -> {
+          // If the length type ID is 0, then the next 15 bits are a number that represents the total length in bits of the sub-packets contained by this packet.
+          let length_bits = list.take(rest, 15)
+          let length = binary.binary_to_int(length_bits)
+          // This part is terrible
+          todo
+        }
+        True ->
+          // If the length type ID is 1, then the next 11 bits are a number that represents the number of sub-packets immediately contained by this packet.
+          todo
       }
-    },
-  )
-  |> binary.binary_to_int
+    _ -> Error("Invalid operator")
+  }
 }
 
 pub fn part1_test() {
