@@ -235,3 +235,7 @@ pub fn part1_main() {
 pub fn part2_test() {
   part2("./data/15/test1.txt")
 }
+
+pub fn part2_main() {
+  part2("./data/15/input.txt")
+}
