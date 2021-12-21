@@ -2,20 +2,15 @@ import gleeunit
 import gleeunit/should
 import gleam/bit_string
 import day16
-
-pub fn bit_string_test() {
-  [<<1, 2>>, <<3>>, <<4>>]
-  |> bit_string.concat
-  |> should.equal(<<1, 2, 3, 4>>)
-}
+import binary
 
 pub fn convert_to_binary_test() {
+  let b2 = [False, False, True, False]
+  let b13 = [True, True, False, True]
+
   day16.hex_to_binary("D")
-  |> should.equal(Ok(<<13:4>>))
-  // day16.hex_to_binary("2")
-  // |> should.equal(Ok(<<2:4>>))
-  // day16.hex_to_binary("D2")
-  // |> should.equal(Ok(0b11010010))
-  // day16.hex_to_binary("D2FE28")
-  // |> should.equal(Ok(<<110100101111111000101000>>))
+  |> should.equal(Ok(b13))
+
+  day16.hex_to_binary("D2")
+  |> should.equal(Ok([True, True, False, True, False, False, True, False]))
 }

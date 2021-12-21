@@ -35,3 +35,8 @@ pub fn sized_test() {
   binary.sized([False, False, True, False], 2)
   |> should.equal([True, False])
 }
+
+pub fn to_binary_sized_test() {
+  binary.to_binary_sized(2, 4)
+  |> should.equal([False, False, True, False])
+}

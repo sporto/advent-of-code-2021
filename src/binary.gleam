@@ -23,6 +23,12 @@ pub fn to_binary(num: Int) -> List(Bool) {
   to_binary_(num, [])
 }
 
+pub fn to_binary_sized(num: Int, size: Int) -> List(Bool) {
+  num
+  |> to_binary
+  |> sized(size)
+}
+
 pub fn int_to_binary_string(num: Int) -> String {
   to_binary(num)
   |> binary_to_string
@@ -72,4 +78,8 @@ pub fn sized(bin: List(Bool), size: Int) -> List(Bool) {
   |> list.append(list.repeat(False, times: size))
   |> list.take(size)
   |> list.reverse
+}
+
+pub fn concat(lists) {
+  list.flatten(lists)
 }
