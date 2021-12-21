@@ -38,7 +38,12 @@ pub fn hex_to_binary(hex: String) -> Result(List(Bool), Nil) {
 }
 
 pub type Packet {
-  Packet(version: Int, is_literal_value: Bool, decimal_value: Int)
+  Packet(version: Int, payload: PacketPayload)
+}
+
+pub type PacketPayload {
+  DecimalValue(Int)
+  Operator
 }
 
 pub fn parse_packet(hex: String) -> Result(Packet, String) {
@@ -50,12 +55,14 @@ pub fn parse_packet(hex: String) -> Result(Packet, String) {
     [v1, v2, v3, t1, t2, t3, ..rest] -> {
       let version = binary.binary_to_int([v1, v2, v3])
       let type_id = binary.binary_to_int([t1, t2, t3])
-      let decimal = get_decimal(rest)
-      Ok(Packet(
-        version: version,
-        is_literal_value: type_id == 4,
-        decimal_value: decimal,
-      ))
+      let payload = case type_id == 4 {
+        True -> {
+          let decimal = get_decimal(rest)
+          DecimalValue(decimal)
+        }
+        False -> Operator
+      }
+      Ok(Packet(version: version, payload: payload))
     }
     _ -> Error("Invalid Packet")
   }
