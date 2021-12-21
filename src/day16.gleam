@@ -5,10 +5,6 @@ import gleam/io
 import gleam/bit_string
 import binary
 
-pub type Packet {
-  Packet(version: Int)
-}
-
 fn parse_hex_char(c: String) -> Result(List(Bool), Nil) {
   case c {
     "0" -> Ok(binary.to_binary_sized(0, 4))
@@ -41,18 +37,50 @@ pub fn hex_to_binary(hex: String) -> Result(List(Bool), Nil) {
   |> result.map(binary.concat)
 }
 
+pub type Packet {
+  Packet(version: Int, is_literal_value: Bool, decimal_value: Int)
+}
+
 pub fn parse_packet(hex: String) -> Result(Packet, String) {
   try bin =
     hex_to_binary(hex)
     |> result.replace_error("Couldn't parse hex")
 
   case bin {
-    [v1, v2, v3, .._] -> {
+    [v1, v2, v3, t1, t2, t3, ..rest] -> {
       let version = binary.binary_to_int([v1, v2, v3])
-      Ok(Packet(version: version))
+      let type_id = binary.binary_to_int([t1, t2, t3])
+      let decimal = get_decimal(rest)
+      Ok(Packet(
+        version: version,
+        is_literal_value: type_id == 4,
+        decimal_value: decimal,
+      ))
     }
     _ -> Error("Invalid Packet")
   }
+}
+
+fn get_decimal(bin: List(Bool)) {
+  bin
+  |> list.sized_chunk(5)
+  |> list.fold_until(
+    [],
+    fn(acc: List(Bool), chunk) {
+      case chunk {
+        [a, b, c, d, e] -> {
+          let n = [b, c, d, e]
+          let next_acc = list.append(acc, n)
+          case a == True {
+            True -> list.Continue(next_acc)
+            False -> list.Stop(next_acc)
+          }
+        }
+        _ -> list.Stop(acc)
+      }
+    },
+  )
+  |> binary.binary_to_int
 }
 
 pub fn part1_test() {

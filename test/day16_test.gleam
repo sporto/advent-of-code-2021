@@ -17,5 +17,9 @@ pub fn convert_to_binary_test() {
 
 pub fn parse_packet_test() {
   day16.parse_packet("D2FE28")
-  |> should.equal(Ok(Packet(version: 6)))
+  |> should.equal(Ok(Packet(
+    version: 6,
+    is_literal_value: True,
+    decimal_value: 2021,
+  )))
 }
