@@ -4,7 +4,10 @@ import gleam/list
 import gleam/int
 import utils
 
-fn to_binary_(num: Int, acc: List(Bool)) -> List(Bool) {
+pub type Bin =
+  List(Bool)
+
+fn to_binary_(num: Int, acc: Bin) -> Bin {
   case num == 0 {
     True -> acc
     False -> {
@@ -19,11 +22,11 @@ fn to_binary_(num: Int, acc: List(Bool)) -> List(Bool) {
   }
 }
 
-pub fn to_binary(num: Int) -> List(Bool) {
+pub fn to_binary(num: Int) -> Bin {
   to_binary_(num, [])
 }
 
-pub fn to_binary_sized(num: Int, size: Int) -> List(Bool) {
+pub fn to_binary_sized(num: Int, size: Int) -> Bin {
   num
   |> to_binary
   |> sized(size)
@@ -34,7 +37,7 @@ pub fn int_to_binary_string(num: Int) -> String {
   |> binary_to_string
 }
 
-pub fn binary_to_string(bin: List(Bool)) -> String {
+pub fn binary_to_string(bin: Bin) -> String {
   bin
   |> list.map(fn(v) {
     case v {
@@ -45,14 +48,14 @@ pub fn binary_to_string(bin: List(Bool)) -> String {
   |> string.join("")
 }
 
-fn binary_to_int_(total: Int, bin: List(Bool)) -> Int {
+fn binary_to_int_(total: Int, bin: Bin) -> Int {
   case bin {
     [] -> total
     [first, ..rest] -> binary_to_int_(total * 2 + bool.to_int(first), rest)
   }
 }
 
-pub fn binary_to_int(bin: List(Bool)) -> Int {
+pub fn binary_to_int(bin: Bin) -> Int {
   binary_to_int_(0, bin)
 }
 
@@ -72,7 +75,7 @@ pub fn from_binary_string(bin: String) -> Int {
   |> binary_to_int
 }
 
-pub fn sized(bin: List(Bool), size: Int) -> List(Bool) {
+pub fn sized(bin: Bin, size: Int) -> Bin {
   bin
   |> list.reverse
   |> list.append(list.repeat(False, times: size))

@@ -1,9 +1,10 @@
+import binary.{Bin}
+import gleam/bit_string
+import gleam/io
 import gleam/list
+import gleam/pair
 import gleam/result
 import gleam/string
-import gleam/io
-import gleam/bit_string
-import binary
 
 fn parse_hex_char(c: String) -> Result(List(Bool), Nil) {
   case c {
@@ -46,58 +47,67 @@ pub type PacketPayload {
   Operator
 }
 
-// Return the packet and unused bin
 pub fn parse_packet(hex: String) -> Result(#(Packet, List(Bool)), String) {
   try bin =
     hex_to_binary(hex)
     |> result.replace_error("Couldn't parse hex")
 
+  read_packet(bin)
+}
+
+// Return the packet and unused bin
+pub fn read_packet(bin: List(Bool)) -> Result(#(Packet, List(Bool)), String) {
   case bin {
     [v1, v2, v3, t1, t2, t3, ..rest] -> {
       let version = binary.binary_to_int([v1, v2, v3])
       let type_id = binary.binary_to_int([t1, t2, t3])
-      let #(payload, unused) = case type_id == 4 {
-        True -> {
-          let #(decimal, unused) = get_decimal(rest)
-          #(DecimalValue(decimal), unused)
-        }
-        False -> {
-          let operator = get_operator(rest)
-          #(Operator, [])
-        }
-      }
+      try #(payload, unused) = read_packet_payload(type_id, rest)
       Ok(#(Packet(version: version, payload: payload), unused))
     }
     _ -> Error("Invalid Packet")
   }
 }
 
-fn get_decimal(bin: List(Bool)) {
-  let n =
-    bin
-    |> list.sized_chunk(5)
-    |> list.fold_until(
-      [],
-      fn(acc: List(Bool), chunk) {
-        case chunk {
-          [a, b, c, d, e] -> {
-            let n = [b, c, d, e]
-            let next_acc = list.append(acc, n)
-            case a == True {
-              True -> list.Continue(next_acc)
-              False -> list.Stop(next_acc)
-            }
-          }
-          _ -> list.Stop(acc)
-        }
-      },
-    )
-    |> binary.binary_to_int
-  // TODO return the unused
-  #(n, [])
+pub fn read_packet_payload(type_id, bin) {
+  case type_id == 4 {
+    True -> {
+      let #(decimal, unused) = get_decimal(bin)
+      Ok(#(DecimalValue(decimal), unused))
+    }
+    False -> {
+      try #(operator, unused) = get_operator(bin)
+      Ok(#(Operator, unused))
+    }
+  }
 }
 
-fn get_operator(bin: List(Bool)) {
+fn get_decimal(bin: Bin) -> #(Int, Bin) {
+  get_decimal_([], list.sized_chunk(bin, 5))
+  |> pair.map_first(binary.binary_to_int)
+}
+
+fn get_decimal_(acc: Bin, chunks: List(Bin)) -> #(Bin, Bin) {
+  case chunks {
+    [] -> #(acc, [])
+    [chunk, ..rest_chunks] ->
+      case chunk {
+        [a, b, c, d, e] -> {
+          let n = [b, c, d, e]
+          let next_acc = list.append(acc, n)
+          case a {
+            True ->
+              // Keep going
+              get_decimal_(next_acc, rest_chunks)
+            False -> // Last chunk
+            #(next_acc, list.flatten(rest_chunks))
+          }
+        }
+        _ -> #(acc, list.flatten(chunks))
+      }
+  }
+}
+
+fn get_operator(bin: List(Bool)) -> Result(#(Int, Bin), String) {
   case bin {
     [id, ..rest] ->
       case id {
