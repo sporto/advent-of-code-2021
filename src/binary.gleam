@@ -59,9 +59,9 @@ pub fn binary_to_int(bin: Bin) -> Int {
   binary_to_int_(0, bin)
 }
 
-/// Convert a string "1101" to int
+/// Convert a string "1101" to bin
 /// Invalid chars are discarded
-pub fn from_binary_string(bin: String) -> Int {
+pub fn from_binary_string(bin: String) -> Bin {
   bin
   |> string.to_graphemes
   |> list.filter_map(int.parse)
@@ -72,6 +72,13 @@ pub fn from_binary_string(bin: String) -> Int {
       _ -> Error(Nil)
     }
   })
+}
+
+/// Convert a string "1101" to int
+/// Invalid chars are discarded
+pub fn int_from_binary_string(bin: String) -> Int {
+  bin
+  |> from_binary_string
   |> binary_to_int
 }
 

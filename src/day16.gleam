@@ -44,10 +44,10 @@ pub type Packet {
 
 pub type PacketPayload {
   DecimalValue(Int)
-  Operator
+  Operator(List(Packet))
 }
 
-pub fn parse_packet(hex: String) -> Result(#(Packet, List(Bool)), String) {
+pub fn parse_packet(hex: String) -> Result(#(Packet, Bin), String) {
   try bin =
     hex_to_binary(hex)
     |> result.replace_error("Couldn't parse hex")
@@ -56,7 +56,7 @@ pub fn parse_packet(hex: String) -> Result(#(Packet, List(Bool)), String) {
 }
 
 // Return the packet and unused bin
-pub fn read_packet(bin: List(Bool)) -> Result(#(Packet, List(Bool)), String) {
+pub fn read_packet(bin: Bin) -> Result(#(Packet, Bin), String) {
   case bin {
     [v1, v2, v3, t1, t2, t3, ..rest] -> {
       let version = binary.binary_to_int([v1, v2, v3])
@@ -68,15 +68,30 @@ pub fn read_packet(bin: List(Bool)) -> Result(#(Packet, List(Bool)), String) {
   }
 }
 
-pub fn read_packet_payload(type_id, bin) {
+// Read packets until we run out of bin
+fn read_packets(bin: Bin) {
+  read_packets_([], bin)
+}
+
+fn read_packets_(packets_read, bin) {
+  case bin {
+    [] -> Ok(#(packets_read, []))
+    _ -> {
+      try #(packet, unused) = read_packet(bin)
+      read_packets_(list.append(packets_read, [packet]), unused)
+    }
+  }
+}
+
+pub fn read_packet_payload(type_id: Int, bin: Bin) {
   case type_id == 4 {
     True -> {
       let #(decimal, unused) = get_decimal(bin)
       Ok(#(DecimalValue(decimal), unused))
     }
     False -> {
-      try #(operator, unused) = get_operator(bin)
-      Ok(#(Operator, unused))
+      try #(operator_packets, unused) = get_operator_packets(bin)
+      Ok(#(Operator(operator_packets), unused))
     }
   }
 }
@@ -107,7 +122,7 @@ fn get_decimal_(acc: Bin, chunks: List(Bin)) -> #(Bin, Bin) {
   }
 }
 
-fn get_operator(bin: List(Bool)) -> Result(#(Int, Bin), String) {
+pub fn get_operator_packets(bin: Bin) -> Result(#(List(Packet), Bin), String) {
   case bin {
     [id, ..rest] ->
       case id {
@@ -115,14 +130,24 @@ fn get_operator(bin: List(Bool)) -> Result(#(Int, Bin), String) {
           // If the length type ID is 0, then the next 15 bits are a number that represents the total length in bits of the sub-packets contained by this packet.
           let length_bits = list.take(rest, 15)
           let length = binary.binary_to_int(length_bits)
-          // This part is terrible
-          todo
+          let sub =
+            rest
+            |> list.drop(15)
+            |> list.take(length)
+          read_packets(sub)
         }
-        True ->
+        True -> {
           // If the length type ID is 1, then the next 11 bits are a number that represents the number of sub-packets immediately contained by this packet.
-          todo
+          let length_bits = list.take(rest, 11)
+          let how_many = binary.binary_to_int(length_bits)
+          // Just throw the unused for now, might need this later
+          rest
+          |> list.drop(11)
+          |> read_packets
+          |> result.map(pair.map_first(_, list.take(_, how_many)))
+        }
       }
-    _ -> Error("Invalid operator")
+    _ -> Error("No packets found")
   }
 }
 

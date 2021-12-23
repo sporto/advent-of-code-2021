@@ -23,8 +23,8 @@ pub fn binary_to_int() {
   |> should.equal(2)
 }
 
-pub fn from_binary_string_test() {
-  binary.from_binary_string("10")
+pub fn int_from_binary_string_test() {
+  binary.int_from_binary_string("10")
   |> should.equal(2)
 }
 
