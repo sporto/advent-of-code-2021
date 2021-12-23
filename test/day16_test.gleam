@@ -3,7 +3,9 @@ import gleeunit/should
 import gleam/bit_string
 import gleam/result
 import gleam/pair
-import day16.{DecimalValue, Operator, Packet, PacketPayload}
+import day16.{
+  DecimalValue, LessThan, Max, Operator, Packet, PacketPayload, Product, Sum,
+}
 import binary
 
 pub fn convert_to_binary_test() {
@@ -56,20 +58,26 @@ pub fn parse_packet_test() {
   |> result.map(pair.first)
   |> should.equal(Ok(Packet(
     version: 1,
-    payload: Operator([
-      Packet(version: 6, payload: DecimalValue(10)),
-      Packet(version: 2, payload: DecimalValue(20)),
-    ]),
+    payload: Operator(
+      LessThan,
+      [
+        Packet(version: 6, payload: DecimalValue(10)),
+        Packet(version: 2, payload: DecimalValue(20)),
+      ],
+    ),
   )))
   day16.parse_packet("EE00D40C823060")
   |> result.map(pair.first)
   |> should.equal(Ok(Packet(
     version: 7,
-    payload: Operator([
-      Packet(version: 2, payload: DecimalValue(1)),
-      Packet(version: 4, payload: DecimalValue(2)),
-      Packet(version: 1, payload: DecimalValue(3)),
-    ]),
+    payload: Operator(
+      Max,
+      [
+        Packet(version: 2, payload: DecimalValue(1)),
+        Packet(version: 4, payload: DecimalValue(2)),
+        Packet(version: 1, payload: DecimalValue(3)),
+      ],
+    ),
   )))
 }
 

@@ -44,7 +44,17 @@ pub type Packet {
 
 pub type PacketPayload {
   DecimalValue(Int)
-  Operator(List(Packet))
+  Operator(Op, List(Packet))
+}
+
+pub type Op {
+  Sum
+  Product
+  Min
+  Max
+  GreaterThan
+  LessThan
+  Equal
 }
 
 pub fn parse_packet(hex: String) -> Result(#(Packet, Bin), String) {
@@ -94,15 +104,23 @@ fn read_packets_(packets_read, bin, how_many) {
 }
 
 pub fn read_packet_payload(type_id: Int, bin: Bin) {
-  case type_id == 4 {
-    True -> {
+  let operator_packet = fn(op, b) {
+    try #(operator_packets, unused) = get_operator_packets(bin)
+    Ok(#(Operator(op, operator_packets), unused))
+  }
+  case type_id {
+    0 -> operator_packet(Sum, bin)
+    1 -> operator_packet(Product, bin)
+    2 -> operator_packet(Min, bin)
+    3 -> operator_packet(Max, bin)
+    4 -> {
       let #(decimal, unused) = get_decimal(bin)
       Ok(#(DecimalValue(decimal), unused))
     }
-    False -> {
-      try #(operator_packets, unused) = get_operator_packets(bin)
-      Ok(#(Operator(operator_packets), unused))
-    }
+    5 -> operator_packet(GreaterThan, bin)
+    6 -> operator_packet(LessThan, bin)
+    7 -> operator_packet(Equal, bin)
+    _ -> Error("Invalid type_id")
   }
 }
 
@@ -173,7 +191,7 @@ fn fold_packet(packet: Packet, acc1, fun) {
   let acc2 = fun(acc1, packet)
   case packet.payload {
     DecimalValue(_) -> acc2
-    Operator(packets) ->
+    Operator(op, packets) ->
       list.fold(
         packets,
         acc2,
