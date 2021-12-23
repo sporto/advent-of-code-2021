@@ -69,18 +69,26 @@ pub fn read_packet(bin: Bin) -> Result(#(Packet, Bin), String) {
 }
 
 // Read packets until we run out of bin
-fn read_packets(bin: Bin) {
-  read_packets_([], bin)
+fn read_packets(bin: Bin, how_many) {
+  read_packets_([], bin, how_many)
 }
 
-fn read_packets_(packets_read, bin) {
-  case bin {
-    [] -> Ok(#(packets_read, []))
+fn read_packets_(packets_read, bin, how_many) {
+  case how_many {
+    0 -> Ok(#(packets_read, bin))
     _ ->
-      case read_packet(bin) {
-        Ok(#(packet, unused)) ->
-          read_packets_(list.append(packets_read, [packet]), unused)
-        Error(_) -> Ok(#(packets_read, []))
+      case bin {
+        [] -> Ok(#(packets_read, []))
+        _ ->
+          case read_packet(bin) {
+            Ok(#(packet, unused)) ->
+              read_packets_(
+                list.append(packets_read, [packet]),
+                unused,
+                how_many - 1,
+              )
+            Error(_) -> Ok(#(packets_read, []))
+          }
       }
   }
 }
@@ -132,26 +140,29 @@ pub fn get_operator_packets(bin: Bin) -> Result(#(List(Packet), Bin), String) {
           // If the length type ID is 0, then the next 15 bits are a number that represents the total length in bits of the sub-packets contained by this packet.
           let length_bits = list.take(rest, 15)
           let length = binary.binary_to_int(length_bits)
+          let after_len = list.drop(rest, 15)
           let sub =
-            rest
-            |> list.drop(15)
+            after_len
             |> list.take(length)
-          read_packets(sub)
+          let unused =
+            after_len
+            |> list.drop(length)
+          try #(packets, _) = read_packets(sub, 1000000)
+          Ok(#(packets, unused))
         }
         True -> {
           // If the length type ID is 1, then the next 11 bits are a number that represents the number of sub-packets immediately contained by this packet.
           // io.debug("rest")
           // io.debug(binary.binary_to_string(rest))
           let length_bits = list.take(rest, 11)
+          let after_len = list.drop(rest, 11)
           // io.debug("length_bits")
           // io.debug(binary.binary_to_string(length_bits))
           let how_many = binary.binary_to_int(length_bits)
           // io.debug(how_many)
           // Just throw the unused for now, might need this later
-          rest
-          |> list.drop(11)
-          |> read_packets
-          |> result.map(pair.map_first(_, list.take(_, how_many)))
+          after_len
+          |> read_packets(how_many)
         }
       }
     _ -> Error("No packets found")
@@ -173,6 +184,8 @@ fn fold_packet(packet: Packet, acc1, fun) {
 
 pub fn part1(input) {
   try #(packet, _) = parse_packet(input)
+
+  io.debug(packet)
 
   let sum = fold_packet(packet, 0, fn(acc, p: Packet) { acc + p.version })
 
