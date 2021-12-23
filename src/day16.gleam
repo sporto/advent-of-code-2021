@@ -185,8 +185,7 @@ fn fold_packet(packet: Packet, acc1, fun) {
 pub fn part1(input) {
   try #(packet, _) = parse_packet(input)
 
-  io.debug(packet)
-
+  // io.debug(packet)
   let sum = fold_packet(packet, 0, fn(acc, p: Packet) { acc + p.version })
 
   Ok(sum)
