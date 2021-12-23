@@ -76,10 +76,12 @@ fn read_packets(bin: Bin) {
 fn read_packets_(packets_read, bin) {
   case bin {
     [] -> Ok(#(packets_read, []))
-    _ -> {
-      try #(packet, unused) = read_packet(bin)
-      read_packets_(list.append(packets_read, [packet]), unused)
-    }
+    _ ->
+      case read_packet(bin) {
+        Ok(#(packet, unused)) ->
+          read_packets_(list.append(packets_read, [packet]), unused)
+        Error(_) -> Ok(#(packets_read, []))
+      }
   }
 }
 
@@ -138,8 +140,13 @@ pub fn get_operator_packets(bin: Bin) -> Result(#(List(Packet), Bin), String) {
         }
         True -> {
           // If the length type ID is 1, then the next 11 bits are a number that represents the number of sub-packets immediately contained by this packet.
+          // io.debug("rest")
+          // io.debug(binary.binary_to_string(rest))
           let length_bits = list.take(rest, 11)
+          // io.debug("length_bits")
+          // io.debug(binary.binary_to_string(length_bits))
           let how_many = binary.binary_to_int(length_bits)
+          // io.debug(how_many)
           // Just throw the unused for now, might need this later
           rest
           |> list.drop(11)
@@ -149,6 +156,27 @@ pub fn get_operator_packets(bin: Bin) -> Result(#(List(Packet), Bin), String) {
       }
     _ -> Error("No packets found")
   }
+}
+
+fn fold_packet(packet: Packet, acc1, fun) {
+  let acc2 = fun(acc1, packet)
+  case packet.payload {
+    DecimalValue(_) -> acc2
+    Operator(packets) ->
+      list.fold(
+        packets,
+        acc2,
+        fn(acc3, packet2) { fold_packet(packet2, acc3, fun) },
+      )
+  }
+}
+
+pub fn part1(input) {
+  try #(packet, _) = parse_packet(input)
+
+  let sum = fold_packet(packet, 0, fn(acc, p: Packet) { acc + p.version })
+
+  Ok(sum)
 }
 
 pub fn part1_test() {

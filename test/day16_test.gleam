@@ -34,6 +34,18 @@ pub fn get_operator_packets_test() {
     ],
     [],
   )))
+
+  day16.get_operator_packets(binary.from_binary_string(
+    "10000000001101010000001100100000100011000001100000",
+  ))
+  |> should.equal(Ok(#(
+    [
+      Packet(version: 2, payload: DecimalValue(1)),
+      Packet(version: 4, payload: DecimalValue(2)),
+      Packet(version: 1, payload: DecimalValue(3)),
+    ],
+    [],
+  )))
 }
 
 pub fn parse_packet_test() {
@@ -53,4 +65,21 @@ pub fn parse_packet_test() {
     ),
     [],
   )))
+  day16.parse_packet("EE00D40C823060")
+  |> should.equal(Ok(#(
+    Packet(
+      version: 7,
+      payload: Operator([
+        Packet(version: 2, payload: DecimalValue(1)),
+        Packet(version: 4, payload: DecimalValue(2)),
+        Packet(version: 1, payload: DecimalValue(3)),
+      ]),
+    ),
+    [],
+  )))
+}
+
+pub fn part1_test() {
+  day16.part1("8A004A801A8002F478")
+  |> should.equal(Ok(16))
 }
