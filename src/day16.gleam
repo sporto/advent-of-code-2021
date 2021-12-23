@@ -3,8 +3,10 @@ import gleam/bit_string
 import gleam/io
 import gleam/list
 import gleam/pair
+import gleam/int
 import gleam/result
 import gleam/string
+import utils
 
 fn parse_hex_char(c: String) -> Result(List(Bool), Nil) {
   case c {
@@ -209,6 +211,54 @@ pub fn part1(input) {
   Ok(sum)
 }
 
-pub fn part1_test() {
-  1
+fn eval(packet: Packet) {
+  case packet.payload {
+    DecimalValue(v) -> v
+    Operator(op, packets) -> eval_operator_packets(op, packets)
+  }
+}
+
+fn eval_operator_packets(op: Op, packets: List(Packet)) {
+  let evalulated_packets = list.map(packets, eval)
+  case op {
+    Sum -> int.sum(evalulated_packets)
+    Product -> list.fold(evalulated_packets, 1, fn(acc, p) { acc * p })
+    Min -> utils.list_min(evalulated_packets, 10000000)
+    Max -> utils.list_max(evalulated_packets, 0)
+    GreaterThan ->
+      case evalulated_packets {
+        [one, two] ->
+          case one > two {
+            True -> 1
+            False -> 0
+          }
+        _ -> 0
+      }
+    LessThan ->
+      case evalulated_packets {
+        [one, two] ->
+          case one < two {
+            True -> 1
+            False -> 0
+          }
+        _ -> 0
+      }
+    Equal ->
+      case evalulated_packets {
+        [one, two] ->
+          case one == two {
+            True -> 1
+            False -> 0
+          }
+        _ -> 0
+      }
+  }
+}
+
+pub fn part2(input) {
+  try #(packet, _) = parse_packet(input)
+
+  let res = eval(packet)
+
+  Ok(res)
 }

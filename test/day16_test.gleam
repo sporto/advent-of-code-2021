@@ -101,3 +101,34 @@ pub fn part1_main_test() {
   day16.part1(input)
   |> should.equal(Ok(897))
 }
+
+pub fn part2_test() {
+  day16.part2("C200B40A82")
+  |> should.equal(Ok(3))
+
+  day16.part2("04005AC33890")
+  |> should.equal(Ok(54))
+
+  day16.part2("880086C3E88112")
+  |> should.equal(Ok(7))
+
+  day16.part2("CE00C43D881120")
+  |> should.equal(Ok(9))
+
+  day16.part2("D8005AC2A8F0")
+  |> should.equal(Ok(1))
+
+  day16.part2("F600BC2D8F")
+  |> should.equal(Ok(0))
+
+  day16.part2("9C005AC2F8F0")
+  |> should.equal(Ok(0))
+
+  day16.part2("9C0141080250320F1802104A08")
+  |> should.equal(Ok(1))
+}
+
+pub fn part2_main_test() {
+  day16.part2(input)
+  |> should.equal(Ok(9485076995911))
+}
