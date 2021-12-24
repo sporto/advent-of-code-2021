@@ -1,3 +1,6 @@
+import gleam/list
+import gleam/io
+
 pub type Target {
   Target(x_left: Int, x_right: Int, y_top: Int, y_bottom: Int)
 }
@@ -8,6 +11,8 @@ pub type Point =
 pub type Probe {
   Probe(location: Point, x_vel: Int, y_vel: Int)
 }
+
+const origin = #(0, 0)
 
 fn get_location(probe: Probe) {
   probe.location
@@ -52,17 +57,55 @@ pub fn step(probe: Probe) -> Probe {
   Probe(next_point, x_vel: one_toward_zero(probe.x_vel), y_vel: probe.y_vel - 1)
 }
 
-pub fn try_trajectory(probe: Probe, area: Target) -> Result(Point, String) {
-  let point = probe.location
+pub fn try_trajectory(probe: Probe, area: Target) {
+  try_trajectory_(probe, [probe.location], probe, area)
+}
+
+fn try_trajectory_(
+  initial_probe: Probe,
+  positions: List(Point),
+  current_probe: Probe,
+  area: Target,
+) -> Result(#(Probe, List(Point), Point), String) {
+  let point = current_probe.location
   // step until pass the area
   case is_within_target_area(point, area) {
-    True -> Ok(point)
+    True -> Ok(#(initial_probe, positions, point))
     False ->
       case is_pass_target_area(point, area) {
         True -> Error("Too far")
-        False -> try_trajectory(step(probe), area)
+        False ->
+          try_trajectory_(
+            initial_probe,
+            [point, ..positions],
+            step(current_probe),
+            area,
+          )
       }
   }
+}
+
+pub fn try_trajectories(area) {
+  let range = list.range(0, 10)
+  // 10 not included
+  let velocities =
+    list.map(range, fn(x) { list.map(range, fn(y) { #(x, y) }) })
+    |> list.flatten
+
+  let probes =
+    velocities
+    |> list.map(fn(vel) {
+      let #(x_vel, y_vel) = vel
+      Probe(origin, x_vel: x_vel, y_vel: y_vel)
+    })
+
+  let results =
+    probes
+    |> list.filter_map(try_trajectory(_, area))
+
+  // Find the result with the highest y
+
+  results
 }
 
 fn one_toward_zero(n) {
