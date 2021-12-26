@@ -1,5 +1,7 @@
 import gleam/list
 import gleam/io
+import gleam/pair
+import utils
 
 pub type Target {
   Target(x_left: Int, x_right: Int, y_top: Int, y_bottom: Int)
@@ -86,7 +88,7 @@ fn try_trajectory_(
 }
 
 pub fn try_trajectories(area) {
-  let range = list.range(0, 10)
+  let range = list.range(0, 300)
   // 10 not included
   let velocities =
     list.map(range, fn(x) { list.map(range, fn(y) { #(x, y) }) })
@@ -104,8 +106,17 @@ pub fn try_trajectories(area) {
     |> list.filter_map(try_trajectory(_, area))
 
   // Find the result with the highest y
+  let max =
+    results
+    |> list.map(fn(tuple) {
+      let #(_, points, _) = tuple
+      points
+    })
+    |> list.flatten
+    |> list.map(pair.second)
+    |> utils.list_max(0)
 
-  results
+  max
 }
 
 fn one_toward_zero(n) {
@@ -119,10 +130,16 @@ fn one_toward_zero(n) {
   }
 }
 
-pub fn part1(input) {
-  Ok(1)
+// fn highest(trajectories) {
+// }
+pub fn part1(area) {
+  try_trajectories(area)
 }
 
 pub fn part1_test() {
   part1(target_test)
+}
+
+pub fn part1_main() {
+  part1(target_main)
 }

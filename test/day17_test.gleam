@@ -25,7 +25,7 @@ pub fn resolve_test() {
 
 pub fn try_trajectory_test() {
   let get_final_point = fn(res) {
-    let #(_, _, point)= res
+    let #(_, _, point) = res
     point
   }
   let probe1 = Probe(origin, x_vel: 7, y_vel: 2)
@@ -49,5 +49,10 @@ pub fn try_trajectory_test() {
 
 pub fn try_trajectories_test() {
   day17.try_trajectories(day17.target_test)
-  |> should.equal([])
+  |> should.equal(45)
+}
+
+pub fn part1_test() {
+  day17.part1_main()
+  |> should.equal(1)
 }
